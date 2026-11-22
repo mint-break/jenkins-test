@@ -251,5 +251,6 @@
     "true width 113 px solved from the front + side apparent widths",
     "bend, cupping, thickness (plush leaf), serration and vein pattern are drawn to match the art's style, not measured",
     "stem: one shared stem on the axis, ~5 px above the crown; both blades start at its top (lower end inside the head)"
-  ]
+  ],
+  "layer_span": 1.0
 }

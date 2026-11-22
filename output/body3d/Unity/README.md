@@ -21,6 +21,8 @@ been compiled or run in Unity yet. The lighting maths is the same as
 4. Create a Material with shader **SpriteStack/Lit**.
 5. Add `SpriteStackCharacter` to an empty GameObject and add one Part per folder:
    - Body: 64 Albedo sprites + 64 Normal textures, layerIndex 0..63, rank 0, twoSided off, glossScale 1
+   - Face: sprites/normals of `Face/`, layerIndex from `Face/stack_config.json` (fractional),
+     span 0.125, rank 2, twoSided off, glossScale 0
    - Leaves: the sprites/normals of `Leaves/`, layerIndex from `Leaves/stack_config.json`
      (`layer_index`, currently 61..84), rank 1, **twoSided on**, glossScale 0.35
    Set the material, `layerSpacingPx` (`character_config.json` → `layer_spacing_px`) and the
@@ -35,8 +37,9 @@ been compiled or run in Unity yet. The lighting maths is the same as
 - Draw the stack at (or near) its native size, e.g. into a RenderTexture, and scale the
   result down. Leaves are thin strips per layer; drawing every layer already shrunk makes
   them semi-transparent and stripy.
-- `fillCopies` draws each layer several times between layers so no gaps show;
-  about `layer_spacing_px * on-screen scale` copies is enough.
+- `copiesPerLayer` (8) draws each body layer 8 times across its height so no gaps show.
+  Keep it at 8: the Face layers (1/8 spacing) sit exactly on those copies' rims; with a
+  different value the face turns stripy.
 - Outline: render the stack to a RenderTexture and outline that once; do not outline layers.
 - Round the stack's screen position to whole pixels if it looks jittery.
 - Sort whole stacks against other objects by their ground point, not layer by layer.

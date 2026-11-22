@@ -17,8 +17,10 @@ public class SpriteStackCharacter : MonoBehaviour
         public Sprite[] layers;
         [Tooltip("Normal textures, same order")]
         public Texture2D[] normals;
-        [Tooltip("Grid index of each layer (Body: 0..63, Leaves: see Leaves/stack_config.json layer_index)")]
-        public int[] layerIndex;
+        [Tooltip("Grid index of each layer, may be fractional (Body: 0..63, Leaves/Face: layer_index in their stack_config.json)")]
+        public float[] layerIndex;
+        [Tooltip("Grid units each layer covers: 1 for Body/Leaves, layer_span (1/8) for Face")]
+        public float span = 1f;
         [Tooltip("Thin surfaces (leaves): light the side that faces the viewer")]
         public bool twoSided;
         [Range(0f, 1f)] public float glossScale = 1f;
@@ -36,13 +38,14 @@ public class SpriteStackCharacter : MonoBehaviour
     [Tooltip("Body layer count (height01_divisor in character_config.json)")]
     public int height01Divisor = 64;
     [Range(0.05f, 1f)] public float squash = 0.75f;
-    [Tooltip("Draw each layer this many times between grid steps so the stack has no gaps")]
-    [Range(1, 12)] public int fillCopies = 7;
+    [Tooltip("copies_per_layer in character_config.json: a span-1 layer is drawn this many times. "
+           + "Keep 8: the Face layers are aligned with these copies.")]
+    public int copiesPerLayer = 8;
     [Tooltip("Yaw in degrees (counter-clockwise on screen)")]
     public float yaw;
     public int baseSortingOrder;
 
-    struct Item { public SpriteRenderer sr; public Part part; public int idx; public int grid; }
+    struct Item { public SpriteRenderer sr; public Part part; public int idx; public float grid; }
     Item[] _items;
     Transform _root;
     MaterialPropertyBlock _mpb;
@@ -56,32 +59,33 @@ public class SpriteStackCharacter : MonoBehaviour
         _root.SetParent(transform, false);
         _mpb = new MaterialPropertyBlock();
 
-        // collect (grid, rank, part, i) and sort into one draw order
-        var list = new System.Collections.Generic.List<(int grid, int rank, Part part, int i)>();
+        // every drawn copy of every part, sorted by height (ties: rank, Body first)
+        var list = new System.Collections.Generic.List<(float h, int rank, Part part, int i)>();
         foreach (var p in parts)
+        {
+            int n = Mathf.Max(1, Mathf.RoundToInt(p.span * copiesPerLayer));
             for (int i = 0; i < p.layers.Length; i++)
-                list.Add((p.layerIndex[i], p.rank, p, i));
-        list.Sort((a, b) => a.grid != b.grid ? a.grid.CompareTo(b.grid) : a.rank.CompareTo(b.rank));
+                for (int c = 0; c < n; c++)
+                    list.Add((Mathf.Round((p.layerIndex[i] + p.span * c / n) * 1e5f) / 1e5f, p.rank, p, i));
+        }
+        list.Sort((a, b) => a.h != b.h ? a.h.CompareTo(b.h) : a.rank.CompareTo(b.rank));
 
         float step = layerSpacingPx / pixelsPerUnit;
         var items = new System.Collections.Generic.List<Item>();
         int order = 0;
         foreach (var e in list)
         {
-            for (int c = 0; c < fillCopies; c++)
-            {
-                var squashT = new GameObject("squash").transform;   // rotate (child), then squash (parent)
-                squashT.SetParent(_root, false);
-                squashT.localPosition = new Vector3(0f, (e.grid + (float)c / fillCopies) * step, 0f);
-                squashT.localScale = new Vector3(1f, squash, 1f);
-                var go = new GameObject($"{e.part.name}_{e.grid:000}_{c}");
-                go.transform.SetParent(squashT, false);
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = e.part.layers[e.i];
-                sr.sharedMaterial = material;
-                sr.sortingOrder = baseSortingOrder + order++;
-                items.Add(new Item { sr = sr, part = e.part, idx = e.i, grid = e.grid });
-            }
+            var squashT = new GameObject("squash").transform;   // rotate (child), then squash (parent)
+            squashT.SetParent(_root, false);
+            squashT.localPosition = new Vector3(0f, e.h * step, 0f);
+            squashT.localScale = new Vector3(1f, squash, 1f);
+            var go = new GameObject($"{e.part.name}_{e.h:000.000}");
+            go.transform.SetParent(squashT, false);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = e.part.layers[e.i];
+            sr.sharedMaterial = material;
+            sr.sortingOrder = baseSortingOrder + order++;
+            items.Add(new Item { sr = sr, part = e.part, idx = e.i, grid = e.h });
         }
         _items = items.ToArray();
         Apply();
@@ -99,7 +103,7 @@ public class SpriteStackCharacter : MonoBehaviour
             _mpb.SetTexture("_NormalTex", it.part.normals[it.idx]);
             _mpb.SetFloat("_Yaw", yaw);
             _mpb.SetFloat("_Squash", squash);
-            _mpb.SetFloat("_Height01", (it.grid + 0.5f) / height01Divisor);
+            _mpb.SetFloat("_Height01", (Mathf.Floor(it.grid) + 0.5f) / height01Divisor);
             _mpb.SetFloat("_TwoSided", it.part.twoSided ? 1f : 0f);
             _mpb.SetFloat("_GlossScale", it.part.glossScale);
             it.sr.SetPropertyBlock(_mpb);

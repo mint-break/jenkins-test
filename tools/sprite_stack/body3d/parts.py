@@ -83,6 +83,7 @@ def export_leaves(out_dir, params: leaves.LeafParams | None = None, views=None):
                 "Body layer_height_px[0] + k * layer_spacing_px",
         "layers": len(files),
         "layer_index": idx,
+        "layer_span": 1.0,
         "files": [f"Leaves/{f}" for f in files],
         "albedo_files": [f"Leaves/Albedo/{f}" for f in files],
         "normal_files": [f"Leaves/Normal/{f}" for f in files],
@@ -124,18 +125,19 @@ def character_config(out_dir, parts_cfgs):
     sp = body["layer_spacing_px"]
     entries = []
     for i, f in enumerate(body["lighting"]["lit"]["albedo_files"]):
-        entries.append({"part": "Body", "index": i, "albedo": f,
+        entries.append({"part": "Body", "index": i, "span": 1.0, "albedo": f,
                         "normal": body["lighting"]["lit"]["normal_files"][i], "baked": body["files"][i]})
     part_rank = {"Body": 0}
     for r, pc in enumerate(parts_cfgs, start=1):
         part_rank[pc["part"]] = r
         for k, a, nfile, bfile in zip(pc["layer_index"], pc["albedo_files"], pc["normal_files"], pc["files"]):
-            entries.append({"part": pc["part"], "index": k, "albedo": a, "normal": nfile, "baked": bfile})
+            entries.append({"part": pc["part"], "index": k, "span": pc.get("layer_span", 1.0),
+                            "albedo": a, "normal": nfile, "baked": bfile})
     entries.sort(key=lambda e: (e["index"], part_rank[e["part"]]))
     for o, e in enumerate(entries):
         e["draw_order"] = o
         e["height_px"] = round(e["index"] * sp, 4)
-    top_index = max(e["index"] for e in entries)
+    top_index = int(math.ceil(max(e["index"] + e["span"] for e in entries))) - 1
     cfg = {
         "name": "Mint", "version": 1,
         "canvas": body["image"], "pivot": body["pivot"], "axes": body["axes"],
@@ -143,6 +145,10 @@ def character_config(out_dir, parts_cfgs):
         "height01_divisor": body["layers"],
         "parts": {"Body": {"config": "Body/stack_config.json", "two_sided": False, "gloss_scale": 1.0}},
         "draw": entries,
+        "copies_per_layer": 8,
+        "draw_rule": "each entry covers [index, index + span) on the body grid and is drawn "
+                     "round(span * copies_per_layer) times at equal steps across it; sort ALL drawn "
+                     "copies of all parts by height (ties: the order of this list, Body first)",
         "lighting": body["lighting"]["lit"]["shader_params"],
         "palette_rgb": body["lighting"]["palette_rgb"],
         "rendering": body["rendering"],
@@ -150,8 +156,10 @@ def character_config(out_dir, parts_cfgs):
     for pc in parts_cfgs:
         cfg["parts"][pc["part"]] = {"config": f"{pc['part']}/stack_config.json",
                                     "two_sided": pc["render"]["two_sided"],
-                                    "gloss_scale": pc["render"]["gloss_scale"]}
-    cfg["parts"]["planned"] = ["Face", "Arms", "Feet", "Tail"]
+                                    "gloss_scale": pc["render"]["gloss_scale"],
+                                    "span": pc.get("layer_span", 1.0)}
+    cfg["parts"]["Body"]["span"] = 1.0
+    cfg["planned_parts"] = [p for p in ["Face", "Arms", "Feet", "Tail"] if p not in cfg["parts"]]
     with open(os.path.join(out_dir, "character_config.json"), "w") as fh:
         json.dump(cfg, fh, indent=2, ensure_ascii=False)
     return cfg
@@ -181,25 +189,42 @@ def merged_layers(out_dir, char_cfg):
     return A, N, TS, G
 
 
-def previews(out_dir, char_cfg, views, leaf_pts, squash=0.75):
+def load_items(out_dir, char_cfg, parts=None):
+    items = []
+    for e in char_cfg["draw"]:
+        if parts is not None and e["part"] not in parts:
+            continue
+        part = char_cfg["parts"][e["part"]]
+        items.append({"albedo": _rd(os.path.join(out_dir, e["albedo"])),
+                      "normal": _rd(os.path.join(out_dir, e["normal"])),
+                      "index": e["index"], "span": e["span"],
+                      "h01": (e["index"] + 0.5 * e["span"]) / char_cfg["height01_divisor"],
+                      "two_sided": part["two_sided"], "gloss": part["gloss_scale"]})
+    return items
+
+
+def previews(out_dir, char_cfg, views, leaf_pts=None, squash=0.75, tag="character"):
     prev = os.path.join(out_dir, "Preview")
     os.makedirs(prev, exist_ok=True)
     pal = {k: np.array(v, float) for k, v in char_cfg["palette_rgb"].items()}
     sp = char_cfg["layer_spacing_px"]
-    A, N, TS, G = merged_layers(out_dir, char_cfg)
-    h01 = [(k + 0.5) / char_cfg["height01_divisor"] for k in range(len(A))]
+    items = load_items(out_dir, char_cfg)
 
     def frame(yaw, out=0.5):
         # render at full size and downsample: thin parts (leaves) stay solid
-        f = lit.lit_frame(A, N, sp, yaw, pal, squash, 1.0, heights01=h01, two_sided=TS, gloss=G,
-                          outline_px=int(round(2 / out)))
+        f = lit.lit_items(items, sp, yaw, pal, squash, 1.0, outline_px=int(round(2 / out)))
         return f.resize((max(1, int(f.width * out)), max(1, int(f.height * out))), Image.LANCZOS)
 
     from .stack import sheet, save_gif
-    sheet([frame(y, 0.75) for y in (0, -45, -90, 180)], 4).save(os.path.join(prev, "with_leaves_preview.png"))
-    sheet([frame(360.0 * i / 16) for i in range(16)], 8).save(os.path.join(prev, "with_leaves_turntable_16.png"))
-    save_gif([frame(360.0 * i / 24) for i in range(24)], os.path.join(prev, "with_leaves_turntable.gif"), ms=110)
-    # orthographic leaf check against the art
+    sheet([frame(y, 0.75) for y in (0, -45, -90, 180)], 4).save(os.path.join(prev, f"{tag}_preview.png"))
+    sheet([frame(360.0 * i / 16) for i in range(16)], 8).save(os.path.join(prev, f"{tag}_turntable_16.png"))
+    save_gif([frame(360.0 * i / 24) for i in range(24)], os.path.join(prev, f"{tag}_turntable.gif"), ms=110)
+    if leaf_pts is not None:
+        leaves_vs_art(out_dir, views, leaf_pts)
+
+
+def leaves_vs_art(out_dir, views, leaf_pts):
+    prev = os.path.join(out_dir, "Preview")
     font = ImageFont.load_default(size=20)
     tiles = []
     for view, kind in (("front", "frontback"), ("side", "side"), ("back", "frontback")):
@@ -213,18 +238,6 @@ def previews(out_dir, char_cfg, views, leaf_pts, squash=0.75):
         im.alpha_composite(Image.fromarray(over))
         ImageDraw.Draw(im).text((6, 6), view, fill=(30, 30, 30, 255), font=font)
         tiles.append(im)
-    v = views["top"]
-    im = Image.fromarray(v.rgb.astype(np.uint8)).convert("RGBA")
-    ys, xs = np.nonzero(v.mask)
-    body = json.load(open(os.path.join(out_dir, "Source", "body_shape.json")))
-    db_max = max(body["samples"]["half_depth_back"])
-    cx, cy = (xs.min() + xs.max()) / 2, np.flatnonzero(v.mask[:, int((xs.min() + xs.max()) / 2)])[0] + db_max
-    msk, _ = leaves.ortho(leaf_pts, "top", size=(v.w, v.h), origin=(cx, cy))
-    over = np.zeros((v.h, v.w, 4), np.uint8)
-    over[msk & ~nd.binary_erosion(msk, iterations=2)] = (225, 30, 30, 255)
-    im.alpha_composite(Image.fromarray(over))
-    ImageDraw.Draw(im).text((6, 6), "top (estimated drawing)", fill=(30, 30, 30, 255), font=font)
-    tiles.append(im)
     W = sum(t.width for t in tiles) + 10 * len(tiles)
     H = max(t.height for t in tiles)
     out = Image.new("RGBA", (W, H), (255, 255, 255, 255))
@@ -235,18 +248,59 @@ def previews(out_dir, char_cfg, views, leaf_pts, squash=0.75):
     out.save(os.path.join(prev, "leaves_vs_art.png"))
 
 
+def face_vs_art(out_dir, char_cfg, views, squash_front=0.15):
+    """Face check: the stack seen straight from the front / side next to the art."""
+    pal = {k: np.array(v, float) for k, v in char_cfg["palette_rgb"].items()}
+    items = load_items(out_dir, char_cfg, parts=("Body", "Face"))
+    sp = char_cfg["layer_spacing_px"]
+    tiles = []
+    for yaw, view in ((0, "front"), (-90, "side")):
+        f = lit.lit_items(items, sp, yaw, pal, squash_front, 1.0, outline_px=2)
+        a = np.asarray(f)
+        ys, xs = np.nonzero(a[..., 3] > 0)
+        f = f.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+        v = views[view]
+        art = Image.fromarray(v.rgb.astype(np.uint8)).convert("RGBA")
+        art = art.resize((int(art.width * f.height / art.height * 1.1), int(f.height * 1.1)))
+        tiles += [art, f]
+    W = sum(t.width for t in tiles) + 20 * len(tiles)
+    H = max(t.height for t in tiles)
+    out = Image.new("RGBA", (W, H), (255, 255, 255, 255))
+    x = 0
+    for t in tiles:
+        out.alpha_composite(t, (x, H - t.height))
+        x += t.width + 20
+    out.save(os.path.join(out_dir, "Preview", "face_vs_art.png"))
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="sprite_stack.body3d.parts")
     ap.add_argument("--input", default="input/views_apose.png")
     ap.add_argument("--order", default="front,side,back,top")
     ap.add_argument("--out", default="output/body3d")
     ap.add_argument("--roll", type=float, default=80.0, help="leaf blade roll about the midrib (deg)")
+    ap.add_argument("--parts", default="leaves,face", help="parts to (re)export; others are reused")
     a = ap.parse_args(argv)
     views = load_views(a.input, order=a.order)
-    lcfg, pts = export_leaves(a.out, leaves.LeafParams(roll_deg=a.roll))
-    ccfg = character_config(a.out, [lcfg])
+    todo = a.parts.split(",")
+    cfgs, pts = [], None
+    if "leaves" in todo:
+        lcfg, pts = export_leaves(a.out, leaves.LeafParams(roll_deg=a.roll))
+    else:
+        lcfg = json.load(open(os.path.join(a.out, "Leaves", "stack_config.json")))
+    lcfg.setdefault("layer_span", 1.0)
+    cfgs.append(lcfg)
+    from . import face
+    if "face" in todo:
+        fcfg, _ = face.export_face(a.out, views)
+    else:
+        fcfg = json.load(open(os.path.join(a.out, "Face", "stack_config.json")))
+    cfgs.append(fcfg)
+    ccfg = character_config(a.out, cfgs)
     previews(a.out, ccfg, views, pts)
-    print(f"leaves: {lcfg['layers']} layers (index {lcfg['layer_index'][0]}..{lcfg['layer_index'][-1]}); "
+    face_vs_art(a.out, ccfg, views)
+    print(f"leaves: {lcfg['layers']} layers; face: {fcfg['layers']} layers "
+          f"(index {fcfg['layer_index'][0]}..{fcfg['layer_index'][-1]}); "
           f"character draw entries: {len(ccfg['draw'])}")
 
 

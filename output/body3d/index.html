@@ -103,7 +103,7 @@ figcaption { font-size: 12px; color: var(--muted); }
   </div>
 
   <section class="block">
-    <div class="head"><h2>胴体＋葉を回して確認（法線ライティング）</h2><p>character_config.json の描画順で Body と Leaves の層を実際に読み込み、Unity用シェーダーと同じ計算で描画</p></div>
+    <div class="head"><h2>胴体＋葉＋顔を回して確認（法線ライティング）</h2><p>character_config.json の描画順で Body・Leaves・Face の層を実際に読み込み、Unity用シェーダーと同じ計算で描画</p></div>
     <div class="main">
       <div class="stage" id="stackStage">
         <div class="hint">ドラッグで回転</div>
@@ -127,6 +127,16 @@ figcaption { font-size: 12px; color: var(--muted); }
         <p class="note">層を回した角度だけ法線も回すので、光は常に画面の左上から当たります。焼き込み版は向きによらず同じ見え方ですが、立体感は弱くなります。</p>
       </aside>
     </div>
+  </section>
+
+  <section class="block">
+    <div class="head"><h2>顔のパーツ</h2><p>Face/ · 胴体の表面に貼った薄い殻（胴体の層の1/8の間隔、64層）</p></div>
+    <div class="previews2">
+      <figure><img src="Preview/character_turntable.gif" alt="胴体・葉・顔を重ねて回したアニメーション"><figcaption>character_turntable.gif</figcaption></figure>
+      <figure><img src="Preview/character_preview.png" alt="正面・斜め・側面・背面から見たキャラクター"><figcaption>character_preview.png · 正面 / 斜め45° / 側面 / 背面</figcaption></figure>
+    </div>
+    <figure><img src="Preview/face_vs_art.png" alt="元絵と、重ねた結果を正面・側面から見た比較"><figcaption>face_vs_art.png · 元絵（正面・側面）と、重ねた結果をほぼ水平から見たもの</figcaption></figure>
+    <figure style="max-width:420px"><img src="Face/face_texture.png" alt="正面図から切り出した顔のテクスチャ" style="background:#c6fce0"><figcaption>Face/face_texture.png · 正面図から切り出した目・口・頬</figcaption></figure>
   </section>
 
   <section class="block">
@@ -390,7 +400,7 @@ async function stackViewer() {
   renderer.setPixelRatio(window.devicePixelRatio || 1);
   stage.prepend(renderer.domElement);
   const scene = new THREE.Scene();
-  const size = cfg.image.width, copies = Math.max(1, Math.ceil(sp));
+  const size = cfg.image.width, cpl = ch.copies_per_layer || 8, copies = cpl;
   const geo = new THREE.PlaneGeometry(size, size);
   const holders = [], quads = [];
   let order = 0;
@@ -403,14 +413,19 @@ async function stackViewer() {
       vertexShader: vs, fragmentShader: fs, transparent: true, depthTest: false, depthWrite: false,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
     });
-    for (let k = 0; k < copies; k++) {
+    const n = Math.max(1, Math.round(e.span * cpl));
+    for (let k = 0; k < n; k++) {
       const holder = new THREE.Object3D();          // squash after rotation, like the Unity builder
-      holder.userData.lift = (e.index + k / copies) * sp;
+      const h = Math.round((e.index + e.span * k / n) * 1e6) / 1e6;
+      holder.userData.lift = h * sp;
       const q = new THREE.Mesh(geo, mat);
-      q.renderOrder = order++;
+      q.userData.sortKey = [h, j];
       holder.add(q); scene.add(holder); holders.push(holder); quads.push(q);
     }
   });
+  // all copies of all parts in height order (ties: draw list order, Body first)
+  quads.slice().sort((a, b) => a.userData.sortKey[0] - b.userData.sortKey[0] || a.userData.sortKey[1] - b.userData.sortKey[1])
+    .forEach((q, i) => { q.renderOrder = i; });
   const total = ch.grid_layers * sp;
   const cam = new THREE.OrthographicCamera(-300, 300, 300, -300, -10, 10);
   const S = { yaw: 0, drag: false, lx: 0, spin: true, dirty: true };
@@ -443,7 +458,7 @@ async function stackViewer() {
       uni.uYaw.value = r;
       quads.forEach(q => { q.rotation.z = r; });
       renderer.render(scene, cam);
-      badge.textContent = `yaw ${((S.yaw % 360) + 360) % 360 | 0}° · 胴体 ${L} 層 + 葉 ${draw.length - L} 層 × ${copies} 回描画`;
+      badge.textContent = `yaw ${((S.yaw % 360) + 360) % 360 | 0}° · ${draw.length} 層（胴体 ${L} · 葉 · 顔）· ${quads.length} 回描画`;
       S.dirty = false;
     }
     requestAnimationFrame(frame);

@@ -119,3 +119,58 @@ def lit_frame(albedo, normals, spacing, yaw, pal, squash=0.75, out_scale=0.5,
         ring = nd.binary_dilation(m, iterations=outline_px) & ~m
         img[ring] = list(outline) + [255]
     return Image.fromarray(img)
+
+
+def lit_items(items, spacing, yaw, pal, squash=0.75, out_scale=1.0, outline=(38, 107, 81), outline_px=2,
+              copies_per_layer=8):
+    """General stack renderer for several parts on one grid.
+
+    items: dicts with albedo, normal (RGBA uint8), index (float, body-grid units),
+    span (grid units covered by the layer: 1 for body/leaves, 1/4 for face),
+    h01, two_sided (bool), gloss (float). Every layer is drawn ceil(span * lift)
+    times across its span, and ALL copies of all parts are drawn in order of
+    height (ties: list order), so thin decal layers interleave correctly."""
+    n0 = items[0]["albedo"].shape[0]
+    S = int(round(n0 * out_scale))
+    sq = max(1, int(round(S * squash)))
+    lift = spacing * out_scale
+    top = max(it["index"] + it["span"] for it in items)
+    Hc = int(math.ceil(sq + lift * top)) + 12
+    canvas = np.zeros((Hc, S, 4), np.float32)
+    base_y = Hc - 6 - sq
+    c, s_ = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+    small = lambda ch: np.asarray(Image.fromarray(np.ascontiguousarray(ch, np.float32), "F")  # noqa: E731
+                                  .resize((S, S), Image.BILINEAR))
+    draws = []
+    for j, it in enumerate(items):
+        A = it["albedo"]
+        if A[..., 3].max() == 0:
+            continue
+        a = _rot(small(A[..., 3] / 255.0), yaw)
+        rgb = [_rot(small(A[..., k] / 255.0 * A[..., 3] / 255.0), yaw) for k in range(3)]
+        nm = [_rot(small(it["normal"][..., k] / 255.0 * 2 - 1), yaw) for k in range(3)]
+        N = np.stack([nm[0] * c - nm[1] * s_, nm[0] * s_ + nm[1] * c, nm[2]], -1)
+        N /= np.linalg.norm(N, axis=-1, keepdims=True) + 1e-9
+        ts = (a > 0) if it.get("two_sided") else None
+        tone = shade(N, it["h01"], pal, squash, two_sided=ts, gloss_scale=it.get("gloss", 1.0))
+        layer = np.concatenate([np.clip(np.stack(rgb, -1) * tone, 0, 1), a[..., None]], -1)
+        layer = np.stack([np.asarray(Image.fromarray(np.ascontiguousarray(layer[..., k], np.float32), "F")
+                                     .resize((S, sq), Image.BILINEAR)) for k in range(4)], -1)
+        copies = max(1, int(round(it["span"] * copies_per_layer)))
+        for k in range(copies):
+            draws.append((round(it["index"] + it["span"] * k / copies, 6), j, layer))
+    draws.sort(key=lambda t: (t[0], t[1]))
+    for h, _, layer in draws:
+        y = int(round(base_y - h * lift))
+        y0, y1 = max(y, 0), min(y + sq, Hc)
+        if y1 > y0:
+            src = layer[y0 - y:y1 - y]
+            canvas[y0:y1] = src + canvas[y0:y1] * (1 - src[..., 3:4])
+    rgbo = np.divide(canvas[..., :3], canvas[..., 3:4], out=np.zeros_like(canvas[..., :3]),
+                     where=canvas[..., 3:4] > 1e-4)
+    img = np.round(np.clip(np.concatenate([rgbo, canvas[..., 3:4]], -1), 0, 1) * 255).astype(np.uint8)
+    if outline is not None:
+        m = nd.binary_fill_holes(img[..., 3] > 110)
+        ring = nd.binary_dilation(m, iterations=outline_px) & ~m
+        img[ring] = list(outline) + [255]
+    return Image.fromarray(img)

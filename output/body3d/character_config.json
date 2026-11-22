@@ -24,24 +24,27 @@
     "Body": {
       "config": "Body/stack_config.json",
       "two_sided": false,
-      "gloss_scale": 1.0
+      "gloss_scale": 1.0,
+      "span": 1.0
     },
     "Leaves": {
       "config": "Leaves/stack_config.json",
       "two_sided": true,
-      "gloss_scale": 0.35
+      "gloss_scale": 0.35,
+      "span": 1.0
     },
-    "planned": [
-      "Face",
-      "Arms",
-      "Feet",
-      "Tail"
-    ]
+    "Face": {
+      "config": "Face/stack_config.json",
+      "two_sided": false,
+      "gloss_scale": 0.0,
+      "span": 0.125
+    }
   },
   "draw": [
     {
       "part": "Body",
       "index": 0,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_000.png",
       "normal": "Body/Normal/Layer_000.png",
       "baked": "Body/Layer_000.png",
@@ -51,6 +54,7 @@
     {
       "part": "Body",
       "index": 1,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_001.png",
       "normal": "Body/Normal/Layer_001.png",
       "baked": "Body/Layer_001.png",
@@ -60,6 +64,7 @@
     {
       "part": "Body",
       "index": 2,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_002.png",
       "normal": "Body/Normal/Layer_002.png",
       "baked": "Body/Layer_002.png",
@@ -69,6 +74,7 @@
     {
       "part": "Body",
       "index": 3,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_003.png",
       "normal": "Body/Normal/Layer_003.png",
       "baked": "Body/Layer_003.png",
@@ -78,6 +84,7 @@
     {
       "part": "Body",
       "index": 4,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_004.png",
       "normal": "Body/Normal/Layer_004.png",
       "baked": "Body/Layer_004.png",
@@ -87,6 +94,7 @@
     {
       "part": "Body",
       "index": 5,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_005.png",
       "normal": "Body/Normal/Layer_005.png",
       "baked": "Body/Layer_005.png",
@@ -96,6 +104,7 @@
     {
       "part": "Body",
       "index": 6,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_006.png",
       "normal": "Body/Normal/Layer_006.png",
       "baked": "Body/Layer_006.png",
@@ -105,6 +114,7 @@
     {
       "part": "Body",
       "index": 7,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_007.png",
       "normal": "Body/Normal/Layer_007.png",
       "baked": "Body/Layer_007.png",
@@ -114,6 +124,7 @@
     {
       "part": "Body",
       "index": 8,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_008.png",
       "normal": "Body/Normal/Layer_008.png",
       "baked": "Body/Layer_008.png",
@@ -123,6 +134,7 @@
     {
       "part": "Body",
       "index": 9,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_009.png",
       "normal": "Body/Normal/Layer_009.png",
       "baked": "Body/Layer_009.png",
@@ -132,6 +144,7 @@
     {
       "part": "Body",
       "index": 10,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_010.png",
       "normal": "Body/Normal/Layer_010.png",
       "baked": "Body/Layer_010.png",
@@ -141,6 +154,7 @@
     {
       "part": "Body",
       "index": 11,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_011.png",
       "normal": "Body/Normal/Layer_011.png",
       "baked": "Body/Layer_011.png",
@@ -150,6 +164,7 @@
     {
       "part": "Body",
       "index": 12,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_012.png",
       "normal": "Body/Normal/Layer_012.png",
       "baked": "Body/Layer_012.png",
@@ -159,6 +174,7 @@
     {
       "part": "Body",
       "index": 13,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_013.png",
       "normal": "Body/Normal/Layer_013.png",
       "baked": "Body/Layer_013.png",
@@ -168,6 +184,7 @@
     {
       "part": "Body",
       "index": 14,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_014.png",
       "normal": "Body/Normal/Layer_014.png",
       "baked": "Body/Layer_014.png",
@@ -177,6 +194,7 @@
     {
       "part": "Body",
       "index": 15,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_015.png",
       "normal": "Body/Normal/Layer_015.png",
       "baked": "Body/Layer_015.png",
@@ -186,6 +204,7 @@
     {
       "part": "Body",
       "index": 16,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_016.png",
       "normal": "Body/Normal/Layer_016.png",
       "baked": "Body/Layer_016.png",
@@ -195,6 +214,7 @@
     {
       "part": "Body",
       "index": 17,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_017.png",
       "normal": "Body/Normal/Layer_017.png",
       "baked": "Body/Layer_017.png",
@@ -204,6 +224,7 @@
     {
       "part": "Body",
       "index": 18,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_018.png",
       "normal": "Body/Normal/Layer_018.png",
       "baked": "Body/Layer_018.png",
@@ -213,6 +234,7 @@
     {
       "part": "Body",
       "index": 19,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_019.png",
       "normal": "Body/Normal/Layer_019.png",
       "baked": "Body/Layer_019.png",
@@ -222,6 +244,7 @@
     {
       "part": "Body",
       "index": 20,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_020.png",
       "normal": "Body/Normal/Layer_020.png",
       "baked": "Body/Layer_020.png",
@@ -231,6 +254,7 @@
     {
       "part": "Body",
       "index": 21,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_021.png",
       "normal": "Body/Normal/Layer_021.png",
       "baked": "Body/Layer_021.png",
@@ -240,6 +264,7 @@
     {
       "part": "Body",
       "index": 22,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_022.png",
       "normal": "Body/Normal/Layer_022.png",
       "baked": "Body/Layer_022.png",
@@ -249,6 +274,7 @@
     {
       "part": "Body",
       "index": 23,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_023.png",
       "normal": "Body/Normal/Layer_023.png",
       "baked": "Body/Layer_023.png",
@@ -258,6 +284,7 @@
     {
       "part": "Body",
       "index": 24,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_024.png",
       "normal": "Body/Normal/Layer_024.png",
       "baked": "Body/Layer_024.png",
@@ -267,6 +294,7 @@
     {
       "part": "Body",
       "index": 25,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_025.png",
       "normal": "Body/Normal/Layer_025.png",
       "baked": "Body/Layer_025.png",
@@ -276,6 +304,7 @@
     {
       "part": "Body",
       "index": 26,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_026.png",
       "normal": "Body/Normal/Layer_026.png",
       "baked": "Body/Layer_026.png",
@@ -285,6 +314,7 @@
     {
       "part": "Body",
       "index": 27,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_027.png",
       "normal": "Body/Normal/Layer_027.png",
       "baked": "Body/Layer_027.png",
@@ -294,6 +324,7 @@
     {
       "part": "Body",
       "index": 28,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_028.png",
       "normal": "Body/Normal/Layer_028.png",
       "baked": "Body/Layer_028.png",
@@ -303,6 +334,7 @@
     {
       "part": "Body",
       "index": 29,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_029.png",
       "normal": "Body/Normal/Layer_029.png",
       "baked": "Body/Layer_029.png",
@@ -312,6 +344,7 @@
     {
       "part": "Body",
       "index": 30,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_030.png",
       "normal": "Body/Normal/Layer_030.png",
       "baked": "Body/Layer_030.png",
@@ -321,6 +354,7 @@
     {
       "part": "Body",
       "index": 31,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_031.png",
       "normal": "Body/Normal/Layer_031.png",
       "baked": "Body/Layer_031.png",
@@ -330,6 +364,7 @@
     {
       "part": "Body",
       "index": 32,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_032.png",
       "normal": "Body/Normal/Layer_032.png",
       "baked": "Body/Layer_032.png",
@@ -339,6 +374,7 @@
     {
       "part": "Body",
       "index": 33,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_033.png",
       "normal": "Body/Normal/Layer_033.png",
       "baked": "Body/Layer_033.png",
@@ -348,6 +384,7 @@
     {
       "part": "Body",
       "index": 34,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_034.png",
       "normal": "Body/Normal/Layer_034.png",
       "baked": "Body/Layer_034.png",
@@ -357,6 +394,7 @@
     {
       "part": "Body",
       "index": 35,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_035.png",
       "normal": "Body/Normal/Layer_035.png",
       "baked": "Body/Layer_035.png",
@@ -364,474 +402,1168 @@
       "height_px": 217.7175
     },
     {
+      "part": "Face",
+      "index": 35.75,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_286.png",
+      "normal": "Face/Normal/Layer_286.png",
+      "baked": "Face/Layer_286.png",
+      "draw_order": 36,
+      "height_px": 222.3829
+    },
+    {
+      "part": "Face",
+      "index": 35.875,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_287.png",
+      "normal": "Face/Normal/Layer_287.png",
+      "baked": "Face/Layer_287.png",
+      "draw_order": 37,
+      "height_px": 223.1604
+    },
+    {
       "part": "Body",
       "index": 36,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_036.png",
       "normal": "Body/Normal/Layer_036.png",
       "baked": "Body/Layer_036.png",
-      "draw_order": 36,
+      "draw_order": 38,
       "height_px": 223.938
+    },
+    {
+      "part": "Face",
+      "index": 36.0,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_288.png",
+      "normal": "Face/Normal/Layer_288.png",
+      "baked": "Face/Layer_288.png",
+      "draw_order": 39,
+      "height_px": 223.938
+    },
+    {
+      "part": "Face",
+      "index": 36.125,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_289.png",
+      "normal": "Face/Normal/Layer_289.png",
+      "baked": "Face/Layer_289.png",
+      "draw_order": 40,
+      "height_px": 224.7156
+    },
+    {
+      "part": "Face",
+      "index": 36.25,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_290.png",
+      "normal": "Face/Normal/Layer_290.png",
+      "baked": "Face/Layer_290.png",
+      "draw_order": 41,
+      "height_px": 225.4931
+    },
+    {
+      "part": "Face",
+      "index": 36.375,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_291.png",
+      "normal": "Face/Normal/Layer_291.png",
+      "baked": "Face/Layer_291.png",
+      "draw_order": 42,
+      "height_px": 226.2707
+    },
+    {
+      "part": "Face",
+      "index": 36.5,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_292.png",
+      "normal": "Face/Normal/Layer_292.png",
+      "baked": "Face/Layer_292.png",
+      "draw_order": 43,
+      "height_px": 227.0482
+    },
+    {
+      "part": "Face",
+      "index": 36.625,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_293.png",
+      "normal": "Face/Normal/Layer_293.png",
+      "baked": "Face/Layer_293.png",
+      "draw_order": 44,
+      "height_px": 227.8258
+    },
+    {
+      "part": "Face",
+      "index": 36.75,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_294.png",
+      "normal": "Face/Normal/Layer_294.png",
+      "baked": "Face/Layer_294.png",
+      "draw_order": 45,
+      "height_px": 228.6034
+    },
+    {
+      "part": "Face",
+      "index": 36.875,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_295.png",
+      "normal": "Face/Normal/Layer_295.png",
+      "baked": "Face/Layer_295.png",
+      "draw_order": 46,
+      "height_px": 229.3809
     },
     {
       "part": "Body",
       "index": 37,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_037.png",
       "normal": "Body/Normal/Layer_037.png",
       "baked": "Body/Layer_037.png",
-      "draw_order": 37,
+      "draw_order": 47,
       "height_px": 230.1585
+    },
+    {
+      "part": "Face",
+      "index": 37.0,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_296.png",
+      "normal": "Face/Normal/Layer_296.png",
+      "baked": "Face/Layer_296.png",
+      "draw_order": 48,
+      "height_px": 230.1585
+    },
+    {
+      "part": "Face",
+      "index": 37.125,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_297.png",
+      "normal": "Face/Normal/Layer_297.png",
+      "baked": "Face/Layer_297.png",
+      "draw_order": 49,
+      "height_px": 230.9361
+    },
+    {
+      "part": "Face",
+      "index": 37.25,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_298.png",
+      "normal": "Face/Normal/Layer_298.png",
+      "baked": "Face/Layer_298.png",
+      "draw_order": 50,
+      "height_px": 231.7136
+    },
+    {
+      "part": "Face",
+      "index": 37.375,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_299.png",
+      "normal": "Face/Normal/Layer_299.png",
+      "baked": "Face/Layer_299.png",
+      "draw_order": 51,
+      "height_px": 232.4912
+    },
+    {
+      "part": "Face",
+      "index": 37.5,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_300.png",
+      "normal": "Face/Normal/Layer_300.png",
+      "baked": "Face/Layer_300.png",
+      "draw_order": 52,
+      "height_px": 233.2687
+    },
+    {
+      "part": "Face",
+      "index": 37.625,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_301.png",
+      "normal": "Face/Normal/Layer_301.png",
+      "baked": "Face/Layer_301.png",
+      "draw_order": 53,
+      "height_px": 234.0463
+    },
+    {
+      "part": "Face",
+      "index": 37.75,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_302.png",
+      "normal": "Face/Normal/Layer_302.png",
+      "baked": "Face/Layer_302.png",
+      "draw_order": 54,
+      "height_px": 234.8239
+    },
+    {
+      "part": "Face",
+      "index": 37.875,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_303.png",
+      "normal": "Face/Normal/Layer_303.png",
+      "baked": "Face/Layer_303.png",
+      "draw_order": 55,
+      "height_px": 235.6014
     },
     {
       "part": "Body",
       "index": 38,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_038.png",
       "normal": "Body/Normal/Layer_038.png",
       "baked": "Body/Layer_038.png",
-      "draw_order": 38,
+      "draw_order": 56,
       "height_px": 236.379
+    },
+    {
+      "part": "Face",
+      "index": 38.0,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_304.png",
+      "normal": "Face/Normal/Layer_304.png",
+      "baked": "Face/Layer_304.png",
+      "draw_order": 57,
+      "height_px": 236.379
+    },
+    {
+      "part": "Face",
+      "index": 38.125,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_305.png",
+      "normal": "Face/Normal/Layer_305.png",
+      "baked": "Face/Layer_305.png",
+      "draw_order": 58,
+      "height_px": 237.1566
+    },
+    {
+      "part": "Face",
+      "index": 38.25,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_306.png",
+      "normal": "Face/Normal/Layer_306.png",
+      "baked": "Face/Layer_306.png",
+      "draw_order": 59,
+      "height_px": 237.9341
+    },
+    {
+      "part": "Face",
+      "index": 38.375,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_307.png",
+      "normal": "Face/Normal/Layer_307.png",
+      "baked": "Face/Layer_307.png",
+      "draw_order": 60,
+      "height_px": 238.7117
+    },
+    {
+      "part": "Face",
+      "index": 38.5,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_308.png",
+      "normal": "Face/Normal/Layer_308.png",
+      "baked": "Face/Layer_308.png",
+      "draw_order": 61,
+      "height_px": 239.4892
+    },
+    {
+      "part": "Face",
+      "index": 38.625,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_309.png",
+      "normal": "Face/Normal/Layer_309.png",
+      "baked": "Face/Layer_309.png",
+      "draw_order": 62,
+      "height_px": 240.2668
+    },
+    {
+      "part": "Face",
+      "index": 38.75,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_310.png",
+      "normal": "Face/Normal/Layer_310.png",
+      "baked": "Face/Layer_310.png",
+      "draw_order": 63,
+      "height_px": 241.0444
+    },
+    {
+      "part": "Face",
+      "index": 38.875,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_311.png",
+      "normal": "Face/Normal/Layer_311.png",
+      "baked": "Face/Layer_311.png",
+      "draw_order": 64,
+      "height_px": 241.8219
     },
     {
       "part": "Body",
       "index": 39,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_039.png",
       "normal": "Body/Normal/Layer_039.png",
       "baked": "Body/Layer_039.png",
-      "draw_order": 39,
+      "draw_order": 65,
       "height_px": 242.5995
+    },
+    {
+      "part": "Face",
+      "index": 39.0,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_312.png",
+      "normal": "Face/Normal/Layer_312.png",
+      "baked": "Face/Layer_312.png",
+      "draw_order": 66,
+      "height_px": 242.5995
+    },
+    {
+      "part": "Face",
+      "index": 39.125,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_313.png",
+      "normal": "Face/Normal/Layer_313.png",
+      "baked": "Face/Layer_313.png",
+      "draw_order": 67,
+      "height_px": 243.3771
+    },
+    {
+      "part": "Face",
+      "index": 39.25,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_314.png",
+      "normal": "Face/Normal/Layer_314.png",
+      "baked": "Face/Layer_314.png",
+      "draw_order": 68,
+      "height_px": 244.1546
+    },
+    {
+      "part": "Face",
+      "index": 39.375,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_315.png",
+      "normal": "Face/Normal/Layer_315.png",
+      "baked": "Face/Layer_315.png",
+      "draw_order": 69,
+      "height_px": 244.9322
+    },
+    {
+      "part": "Face",
+      "index": 39.5,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_316.png",
+      "normal": "Face/Normal/Layer_316.png",
+      "baked": "Face/Layer_316.png",
+      "draw_order": 70,
+      "height_px": 245.7097
+    },
+    {
+      "part": "Face",
+      "index": 39.625,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_317.png",
+      "normal": "Face/Normal/Layer_317.png",
+      "baked": "Face/Layer_317.png",
+      "draw_order": 71,
+      "height_px": 246.4873
+    },
+    {
+      "part": "Face",
+      "index": 39.75,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_318.png",
+      "normal": "Face/Normal/Layer_318.png",
+      "baked": "Face/Layer_318.png",
+      "draw_order": 72,
+      "height_px": 247.2649
+    },
+    {
+      "part": "Face",
+      "index": 39.875,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_319.png",
+      "normal": "Face/Normal/Layer_319.png",
+      "baked": "Face/Layer_319.png",
+      "draw_order": 73,
+      "height_px": 248.0424
     },
     {
       "part": "Body",
       "index": 40,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_040.png",
       "normal": "Body/Normal/Layer_040.png",
       "baked": "Body/Layer_040.png",
-      "draw_order": 40,
+      "draw_order": 74,
       "height_px": 248.82
+    },
+    {
+      "part": "Face",
+      "index": 40.0,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_320.png",
+      "normal": "Face/Normal/Layer_320.png",
+      "baked": "Face/Layer_320.png",
+      "draw_order": 75,
+      "height_px": 248.82
+    },
+    {
+      "part": "Face",
+      "index": 40.125,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_321.png",
+      "normal": "Face/Normal/Layer_321.png",
+      "baked": "Face/Layer_321.png",
+      "draw_order": 76,
+      "height_px": 249.5976
+    },
+    {
+      "part": "Face",
+      "index": 40.25,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_322.png",
+      "normal": "Face/Normal/Layer_322.png",
+      "baked": "Face/Layer_322.png",
+      "draw_order": 77,
+      "height_px": 250.3751
+    },
+    {
+      "part": "Face",
+      "index": 40.375,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_323.png",
+      "normal": "Face/Normal/Layer_323.png",
+      "baked": "Face/Layer_323.png",
+      "draw_order": 78,
+      "height_px": 251.1527
+    },
+    {
+      "part": "Face",
+      "index": 40.5,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_324.png",
+      "normal": "Face/Normal/Layer_324.png",
+      "baked": "Face/Layer_324.png",
+      "draw_order": 79,
+      "height_px": 251.9302
+    },
+    {
+      "part": "Face",
+      "index": 40.625,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_325.png",
+      "normal": "Face/Normal/Layer_325.png",
+      "baked": "Face/Layer_325.png",
+      "draw_order": 80,
+      "height_px": 252.7078
+    },
+    {
+      "part": "Face",
+      "index": 40.75,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_326.png",
+      "normal": "Face/Normal/Layer_326.png",
+      "baked": "Face/Layer_326.png",
+      "draw_order": 81,
+      "height_px": 253.4854
+    },
+    {
+      "part": "Face",
+      "index": 40.875,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_327.png",
+      "normal": "Face/Normal/Layer_327.png",
+      "baked": "Face/Layer_327.png",
+      "draw_order": 82,
+      "height_px": 254.2629
     },
     {
       "part": "Body",
       "index": 41,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_041.png",
       "normal": "Body/Normal/Layer_041.png",
       "baked": "Body/Layer_041.png",
-      "draw_order": 41,
+      "draw_order": 83,
       "height_px": 255.0405
+    },
+    {
+      "part": "Face",
+      "index": 41.0,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_328.png",
+      "normal": "Face/Normal/Layer_328.png",
+      "baked": "Face/Layer_328.png",
+      "draw_order": 84,
+      "height_px": 255.0405
+    },
+    {
+      "part": "Face",
+      "index": 41.125,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_329.png",
+      "normal": "Face/Normal/Layer_329.png",
+      "baked": "Face/Layer_329.png",
+      "draw_order": 85,
+      "height_px": 255.8181
+    },
+    {
+      "part": "Face",
+      "index": 41.25,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_330.png",
+      "normal": "Face/Normal/Layer_330.png",
+      "baked": "Face/Layer_330.png",
+      "draw_order": 86,
+      "height_px": 256.5956
+    },
+    {
+      "part": "Face",
+      "index": 41.375,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_331.png",
+      "normal": "Face/Normal/Layer_331.png",
+      "baked": "Face/Layer_331.png",
+      "draw_order": 87,
+      "height_px": 257.3732
+    },
+    {
+      "part": "Face",
+      "index": 41.5,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_332.png",
+      "normal": "Face/Normal/Layer_332.png",
+      "baked": "Face/Layer_332.png",
+      "draw_order": 88,
+      "height_px": 258.1507
+    },
+    {
+      "part": "Face",
+      "index": 41.625,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_333.png",
+      "normal": "Face/Normal/Layer_333.png",
+      "baked": "Face/Layer_333.png",
+      "draw_order": 89,
+      "height_px": 258.9283
+    },
+    {
+      "part": "Face",
+      "index": 41.75,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_334.png",
+      "normal": "Face/Normal/Layer_334.png",
+      "baked": "Face/Layer_334.png",
+      "draw_order": 90,
+      "height_px": 259.7059
+    },
+    {
+      "part": "Face",
+      "index": 41.875,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_335.png",
+      "normal": "Face/Normal/Layer_335.png",
+      "baked": "Face/Layer_335.png",
+      "draw_order": 91,
+      "height_px": 260.4834
     },
     {
       "part": "Body",
       "index": 42,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_042.png",
       "normal": "Body/Normal/Layer_042.png",
       "baked": "Body/Layer_042.png",
-      "draw_order": 42,
+      "draw_order": 92,
       "height_px": 261.261
+    },
+    {
+      "part": "Face",
+      "index": 42.0,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_336.png",
+      "normal": "Face/Normal/Layer_336.png",
+      "baked": "Face/Layer_336.png",
+      "draw_order": 93,
+      "height_px": 261.261
+    },
+    {
+      "part": "Face",
+      "index": 42.125,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_337.png",
+      "normal": "Face/Normal/Layer_337.png",
+      "baked": "Face/Layer_337.png",
+      "draw_order": 94,
+      "height_px": 262.0386
+    },
+    {
+      "part": "Face",
+      "index": 42.25,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_338.png",
+      "normal": "Face/Normal/Layer_338.png",
+      "baked": "Face/Layer_338.png",
+      "draw_order": 95,
+      "height_px": 262.8161
+    },
+    {
+      "part": "Face",
+      "index": 42.375,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_339.png",
+      "normal": "Face/Normal/Layer_339.png",
+      "baked": "Face/Layer_339.png",
+      "draw_order": 96,
+      "height_px": 263.5937
+    },
+    {
+      "part": "Face",
+      "index": 42.5,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_340.png",
+      "normal": "Face/Normal/Layer_340.png",
+      "baked": "Face/Layer_340.png",
+      "draw_order": 97,
+      "height_px": 264.3712
+    },
+    {
+      "part": "Face",
+      "index": 42.625,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_341.png",
+      "normal": "Face/Normal/Layer_341.png",
+      "baked": "Face/Layer_341.png",
+      "draw_order": 98,
+      "height_px": 265.1488
+    },
+    {
+      "part": "Face",
+      "index": 42.75,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_342.png",
+      "normal": "Face/Normal/Layer_342.png",
+      "baked": "Face/Layer_342.png",
+      "draw_order": 99,
+      "height_px": 265.9264
+    },
+    {
+      "part": "Face",
+      "index": 42.875,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_343.png",
+      "normal": "Face/Normal/Layer_343.png",
+      "baked": "Face/Layer_343.png",
+      "draw_order": 100,
+      "height_px": 266.7039
     },
     {
       "part": "Body",
       "index": 43,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_043.png",
       "normal": "Body/Normal/Layer_043.png",
       "baked": "Body/Layer_043.png",
-      "draw_order": 43,
+      "draw_order": 101,
       "height_px": 267.4815
+    },
+    {
+      "part": "Face",
+      "index": 43.0,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_344.png",
+      "normal": "Face/Normal/Layer_344.png",
+      "baked": "Face/Layer_344.png",
+      "draw_order": 102,
+      "height_px": 267.4815
+    },
+    {
+      "part": "Face",
+      "index": 43.125,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_345.png",
+      "normal": "Face/Normal/Layer_345.png",
+      "baked": "Face/Layer_345.png",
+      "draw_order": 103,
+      "height_px": 268.2591
+    },
+    {
+      "part": "Face",
+      "index": 43.25,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_346.png",
+      "normal": "Face/Normal/Layer_346.png",
+      "baked": "Face/Layer_346.png",
+      "draw_order": 104,
+      "height_px": 269.0366
+    },
+    {
+      "part": "Face",
+      "index": 43.375,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_347.png",
+      "normal": "Face/Normal/Layer_347.png",
+      "baked": "Face/Layer_347.png",
+      "draw_order": 105,
+      "height_px": 269.8142
+    },
+    {
+      "part": "Face",
+      "index": 43.5,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_348.png",
+      "normal": "Face/Normal/Layer_348.png",
+      "baked": "Face/Layer_348.png",
+      "draw_order": 106,
+      "height_px": 270.5917
+    },
+    {
+      "part": "Face",
+      "index": 43.625,
+      "span": 0.125,
+      "albedo": "Face/Albedo/Layer_349.png",
+      "normal": "Face/Normal/Layer_349.png",
+      "baked": "Face/Layer_349.png",
+      "draw_order": 107,
+      "height_px": 271.3693
     },
     {
       "part": "Body",
       "index": 44,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_044.png",
       "normal": "Body/Normal/Layer_044.png",
       "baked": "Body/Layer_044.png",
-      "draw_order": 44,
+      "draw_order": 108,
       "height_px": 273.702
     },
     {
       "part": "Body",
       "index": 45,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_045.png",
       "normal": "Body/Normal/Layer_045.png",
       "baked": "Body/Layer_045.png",
-      "draw_order": 45,
+      "draw_order": 109,
       "height_px": 279.9225
     },
     {
       "part": "Body",
       "index": 46,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_046.png",
       "normal": "Body/Normal/Layer_046.png",
       "baked": "Body/Layer_046.png",
-      "draw_order": 46,
+      "draw_order": 110,
       "height_px": 286.143
     },
     {
       "part": "Body",
       "index": 47,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_047.png",
       "normal": "Body/Normal/Layer_047.png",
       "baked": "Body/Layer_047.png",
-      "draw_order": 47,
+      "draw_order": 111,
       "height_px": 292.3635
     },
     {
       "part": "Body",
       "index": 48,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_048.png",
       "normal": "Body/Normal/Layer_048.png",
       "baked": "Body/Layer_048.png",
-      "draw_order": 48,
+      "draw_order": 112,
       "height_px": 298.584
     },
     {
       "part": "Body",
       "index": 49,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_049.png",
       "normal": "Body/Normal/Layer_049.png",
       "baked": "Body/Layer_049.png",
-      "draw_order": 49,
+      "draw_order": 113,
       "height_px": 304.8045
     },
     {
       "part": "Body",
       "index": 50,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_050.png",
       "normal": "Body/Normal/Layer_050.png",
       "baked": "Body/Layer_050.png",
-      "draw_order": 50,
+      "draw_order": 114,
       "height_px": 311.025
     },
     {
       "part": "Body",
       "index": 51,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_051.png",
       "normal": "Body/Normal/Layer_051.png",
       "baked": "Body/Layer_051.png",
-      "draw_order": 51,
+      "draw_order": 115,
       "height_px": 317.2455
     },
     {
       "part": "Body",
       "index": 52,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_052.png",
       "normal": "Body/Normal/Layer_052.png",
       "baked": "Body/Layer_052.png",
-      "draw_order": 52,
+      "draw_order": 116,
       "height_px": 323.466
     },
     {
       "part": "Body",
       "index": 53,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_053.png",
       "normal": "Body/Normal/Layer_053.png",
       "baked": "Body/Layer_053.png",
-      "draw_order": 53,
+      "draw_order": 117,
       "height_px": 329.6865
     },
     {
       "part": "Body",
       "index": 54,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_054.png",
       "normal": "Body/Normal/Layer_054.png",
       "baked": "Body/Layer_054.png",
-      "draw_order": 54,
+      "draw_order": 118,
       "height_px": 335.907
     },
     {
       "part": "Body",
       "index": 55,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_055.png",
       "normal": "Body/Normal/Layer_055.png",
       "baked": "Body/Layer_055.png",
-      "draw_order": 55,
+      "draw_order": 119,
       "height_px": 342.1275
     },
     {
       "part": "Body",
       "index": 56,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_056.png",
       "normal": "Body/Normal/Layer_056.png",
       "baked": "Body/Layer_056.png",
-      "draw_order": 56,
+      "draw_order": 120,
       "height_px": 348.348
     },
     {
       "part": "Body",
       "index": 57,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_057.png",
       "normal": "Body/Normal/Layer_057.png",
       "baked": "Body/Layer_057.png",
-      "draw_order": 57,
+      "draw_order": 121,
       "height_px": 354.5685
     },
     {
       "part": "Body",
       "index": 58,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_058.png",
       "normal": "Body/Normal/Layer_058.png",
       "baked": "Body/Layer_058.png",
-      "draw_order": 58,
+      "draw_order": 122,
       "height_px": 360.789
     },
     {
       "part": "Body",
       "index": 59,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_059.png",
       "normal": "Body/Normal/Layer_059.png",
       "baked": "Body/Layer_059.png",
-      "draw_order": 59,
+      "draw_order": 123,
       "height_px": 367.0095
     },
     {
       "part": "Body",
       "index": 60,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_060.png",
       "normal": "Body/Normal/Layer_060.png",
       "baked": "Body/Layer_060.png",
-      "draw_order": 60,
+      "draw_order": 124,
       "height_px": 373.23
     },
     {
       "part": "Body",
       "index": 61,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_061.png",
       "normal": "Body/Normal/Layer_061.png",
       "baked": "Body/Layer_061.png",
-      "draw_order": 61,
+      "draw_order": 125,
       "height_px": 379.4505
     },
     {
       "part": "Leaves",
       "index": 61,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_061.png",
       "normal": "Leaves/Normal/Layer_061.png",
       "baked": "Leaves/Layer_061.png",
-      "draw_order": 62,
+      "draw_order": 126,
       "height_px": 379.4505
     },
     {
       "part": "Body",
       "index": 62,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_062.png",
       "normal": "Body/Normal/Layer_062.png",
       "baked": "Body/Layer_062.png",
-      "draw_order": 63,
+      "draw_order": 127,
       "height_px": 385.671
     },
     {
       "part": "Leaves",
       "index": 62,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_062.png",
       "normal": "Leaves/Normal/Layer_062.png",
       "baked": "Leaves/Layer_062.png",
-      "draw_order": 64,
+      "draw_order": 128,
       "height_px": 385.671
     },
     {
       "part": "Body",
       "index": 63,
+      "span": 1.0,
       "albedo": "Body/Albedo/Layer_063.png",
       "normal": "Body/Normal/Layer_063.png",
       "baked": "Body/Layer_063.png",
-      "draw_order": 65,
+      "draw_order": 129,
       "height_px": 391.8915
     },
     {
       "part": "Leaves",
       "index": 63,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_063.png",
       "normal": "Leaves/Normal/Layer_063.png",
       "baked": "Leaves/Layer_063.png",
-      "draw_order": 66,
+      "draw_order": 130,
       "height_px": 391.8915
     },
     {
       "part": "Leaves",
       "index": 64,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_064.png",
       "normal": "Leaves/Normal/Layer_064.png",
       "baked": "Leaves/Layer_064.png",
-      "draw_order": 67,
+      "draw_order": 131,
       "height_px": 398.112
     },
     {
       "part": "Leaves",
       "index": 65,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_065.png",
       "normal": "Leaves/Normal/Layer_065.png",
       "baked": "Leaves/Layer_065.png",
-      "draw_order": 68,
+      "draw_order": 132,
       "height_px": 404.3325
     },
     {
       "part": "Leaves",
       "index": 66,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_066.png",
       "normal": "Leaves/Normal/Layer_066.png",
       "baked": "Leaves/Layer_066.png",
-      "draw_order": 69,
+      "draw_order": 133,
       "height_px": 410.553
     },
     {
       "part": "Leaves",
       "index": 67,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_067.png",
       "normal": "Leaves/Normal/Layer_067.png",
       "baked": "Leaves/Layer_067.png",
-      "draw_order": 70,
+      "draw_order": 134,
       "height_px": 416.7735
     },
     {
       "part": "Leaves",
       "index": 68,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_068.png",
       "normal": "Leaves/Normal/Layer_068.png",
       "baked": "Leaves/Layer_068.png",
-      "draw_order": 71,
+      "draw_order": 135,
       "height_px": 422.994
     },
     {
       "part": "Leaves",
       "index": 69,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_069.png",
       "normal": "Leaves/Normal/Layer_069.png",
       "baked": "Leaves/Layer_069.png",
-      "draw_order": 72,
+      "draw_order": 136,
       "height_px": 429.2145
     },
     {
       "part": "Leaves",
       "index": 70,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_070.png",
       "normal": "Leaves/Normal/Layer_070.png",
       "baked": "Leaves/Layer_070.png",
-      "draw_order": 73,
+      "draw_order": 137,
       "height_px": 435.435
     },
     {
       "part": "Leaves",
       "index": 71,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_071.png",
       "normal": "Leaves/Normal/Layer_071.png",
       "baked": "Leaves/Layer_071.png",
-      "draw_order": 74,
+      "draw_order": 138,
       "height_px": 441.6555
     },
     {
       "part": "Leaves",
       "index": 72,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_072.png",
       "normal": "Leaves/Normal/Layer_072.png",
       "baked": "Leaves/Layer_072.png",
-      "draw_order": 75,
+      "draw_order": 139,
       "height_px": 447.876
     },
     {
       "part": "Leaves",
       "index": 73,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_073.png",
       "normal": "Leaves/Normal/Layer_073.png",
       "baked": "Leaves/Layer_073.png",
-      "draw_order": 76,
+      "draw_order": 140,
       "height_px": 454.0965
     },
     {
       "part": "Leaves",
       "index": 74,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_074.png",
       "normal": "Leaves/Normal/Layer_074.png",
       "baked": "Leaves/Layer_074.png",
-      "draw_order": 77,
+      "draw_order": 141,
       "height_px": 460.317
     },
     {
       "part": "Leaves",
       "index": 75,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_075.png",
       "normal": "Leaves/Normal/Layer_075.png",
       "baked": "Leaves/Layer_075.png",
-      "draw_order": 78,
+      "draw_order": 142,
       "height_px": 466.5375
     },
     {
       "part": "Leaves",
       "index": 76,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_076.png",
       "normal": "Leaves/Normal/Layer_076.png",
       "baked": "Leaves/Layer_076.png",
-      "draw_order": 79,
+      "draw_order": 143,
       "height_px": 472.758
     },
     {
       "part": "Leaves",
       "index": 77,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_077.png",
       "normal": "Leaves/Normal/Layer_077.png",
       "baked": "Leaves/Layer_077.png",
-      "draw_order": 80,
+      "draw_order": 144,
       "height_px": 478.9785
     },
     {
       "part": "Leaves",
       "index": 78,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_078.png",
       "normal": "Leaves/Normal/Layer_078.png",
       "baked": "Leaves/Layer_078.png",
-      "draw_order": 81,
+      "draw_order": 145,
       "height_px": 485.199
     },
     {
       "part": "Leaves",
       "index": 79,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_079.png",
       "normal": "Leaves/Normal/Layer_079.png",
       "baked": "Leaves/Layer_079.png",
-      "draw_order": 82,
+      "draw_order": 146,
       "height_px": 491.4195
     },
     {
       "part": "Leaves",
       "index": 80,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_080.png",
       "normal": "Leaves/Normal/Layer_080.png",
       "baked": "Leaves/Layer_080.png",
-      "draw_order": 83,
+      "draw_order": 147,
       "height_px": 497.64
     },
     {
       "part": "Leaves",
       "index": 81,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_081.png",
       "normal": "Leaves/Normal/Layer_081.png",
       "baked": "Leaves/Layer_081.png",
-      "draw_order": 84,
+      "draw_order": 148,
       "height_px": 503.8605
     },
     {
       "part": "Leaves",
       "index": 82,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_082.png",
       "normal": "Leaves/Normal/Layer_082.png",
       "baked": "Leaves/Layer_082.png",
-      "draw_order": 85,
+      "draw_order": 149,
       "height_px": 510.081
     },
     {
       "part": "Leaves",
       "index": 83,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_083.png",
       "normal": "Leaves/Normal/Layer_083.png",
       "baked": "Leaves/Layer_083.png",
-      "draw_order": 86,
+      "draw_order": 150,
       "height_px": 516.3015
     },
     {
       "part": "Leaves",
       "index": 84,
+      "span": 1.0,
       "albedo": "Leaves/Albedo/Layer_084.png",
       "normal": "Leaves/Normal/Layer_084.png",
       "baked": "Leaves/Layer_084.png",
-      "draw_order": 87,
+      "draw_order": 151,
       "height_px": 522.522
     }
   ],
+  "copies_per_layer": 8,
+  "draw_rule": "each entry covers [index, index + span) on the body grid and is drawn round(span * copies_per_layer) times at equal steps across it; sort ALL drawn copies of all parts by height (ties: the order of this list, Body first)",
   "lighting": {
     "light_dir": [
       -0.45,
@@ -883,5 +1615,10 @@
     "rotation": "rotate every layer by the same angle about the pivot",
     "positions": "round screen positions to whole pixels",
     "sorting": "sort whole stacks by their ground point, not layer by layer"
-  }
+  },
+  "planned_parts": [
+    "Arms",
+    "Feet",
+    "Tail"
+  ]
 }
