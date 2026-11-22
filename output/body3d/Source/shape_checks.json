@@ -1,0 +1,84 @@
+{
+  "outline_error_px": {
+    "front": {
+      "rows": 36,
+      "mean_px": 2.0538134579670793,
+      "p95_px": 3.803927730301654,
+      "max_px": 3.9729101270630167
+    },
+    "back": {
+      "rows": 43,
+      "mean_px": 0.8915153118460181,
+      "p95_px": 2.0297080851241844,
+      "max_px": 2.0606872012065764
+    },
+    "side": {
+      "rows": 227,
+      "mean_px": 1.2726033321161911,
+      "p95_px": 2.9253012610589764,
+      "max_px": 4.138869184609291
+    }
+  },
+  "estimated_parts_deviation_px": {
+    "front_incl_crown_and_base": {
+      "rows": 151,
+      "mean_px": 3.8363088852075493,
+      "p95_px": 8.991914564577547,
+      "max_px": 11.051170294387404
+    },
+    "side_incl_crown_and_base": {
+      "rows": 299,
+      "mean_px": 1.829874584541391,
+      "p95_px": 5.797130432083391,
+      "max_px": 16.409123011184583
+    }
+  },
+  "smoothness": {
+    "width": {
+      "curvature_spikes": 0,
+      "curvature_sign_changes": 0,
+      "max_slope": 11.93052442697093
+    },
+    "depth_front": {
+      "curvature_spikes": 0,
+      "curvature_sign_changes": 0,
+      "max_slope": 10.229200121681757
+    },
+    "depth_back": {
+      "curvature_spikes": 0,
+      "curvature_sign_changes": 0,
+      "max_slope": 10.444049952842626
+    }
+  },
+  "layer_steps_64": {
+    "width": {
+      "layer_spacing_px": 5.18375,
+      "wall_max_step_px": 4.999172226887964,
+      "wall_max_step_in_layer_spacings": 0.9643930025344517,
+      "wall_layers": 48,
+      "cap_max_step_px": 28.003768528160904,
+      "cap_layers": 15
+    },
+    "depth_front": {
+      "layer_spacing_px": 5.18375,
+      "wall_max_step_px": 4.967170446584674,
+      "wall_max_step_in_layer_spacings": 0.9582195218875669,
+      "wall_layers": 49,
+      "cap_max_step_px": 24.09282476029056,
+      "cap_layers": 14
+    },
+    "depth_back": {
+      "layer_spacing_px": 5.18375,
+      "wall_max_step_px": 4.758424878814026,
+      "wall_max_step_in_layer_spacings": 0.917950302158481,
+      "wall_layers": 50,
+      "cap_max_step_px": 24.597786210855467,
+      "cap_layers": 13
+    }
+  },
+  "symmetry": {
+    "left_right": "symmetric by construction (one width profile)",
+    "max_back_front_depth_ratio": 1.1210579604812918
+  },
+  "problems": []
+}

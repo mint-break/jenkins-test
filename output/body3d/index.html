@@ -59,6 +59,8 @@ figure { margin: 0; display: grid; gap: 6px; }
 figure img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
 figcaption { font-size: 12px; color: var(--muted); }
 .views img { aspect-ratio: 1; object-fit: contain; padding: 8px; }
+.previews2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; }
+@media (max-width: 760px) { .previews2 { grid-template-columns: minmax(0, 1fr); } }
 .est { background: var(--warn-soft); border-radius: 10px; padding: 12px 14px; }
 .est h3 { margin: 0 0 6px; font-size: 13px; color: var(--warn); }
 .est ul { margin: 0; padding-left: 18px; font-size: 13px; }
@@ -68,8 +70,8 @@ figcaption { font-size: 12px; color: var(--muted); }
 <div class="wrap">
   <header>
     <h1>Mint Body 3D</h1>
-    <span class="chip">STEP 3 · 形状確認</span>
-    <p class="sub">Aポーズの4方向画像から再構築した胴体の3D形状です。スプライトスタックへの変換前の段階です</p>
+    <span class="chip">STEP 6 · 64層を書き出し済み</span>
+    <p class="sub">Aポーズの4方向画像から再構築した胴体の3D形状と、それを水平に64層へ切り出したスプライトスタック素材です</p>
   </header>
 
   <div class="main">
@@ -95,6 +97,16 @@ figcaption { font-size: 12px; color: var(--muted); }
       <dl id="facts"></dl>
     </aside>
   </div>
+
+  <section class="block">
+    <div class="head"><h2>64層を重ねた結果</h2><p>Body/Layer_000〜063.png を重ねて回したもの · 見下ろし 0.75 · 輪郭線は重ねた後に付加</p></div>
+    <div class="previews2">
+      <figure><img src="Preview/stacked_turntable.gif" alt="64層を重ねて回したアニメーション"><figcaption>stacked_turntable.gif · 48コマで1回転</figcaption></figure>
+      <figure><img src="Preview/stacked_preview.png" alt="正面・斜め・側面・背面から見た重ねた結果"><figcaption>stacked_preview.png · 正面 / 斜め45° / 側面 / 背面</figcaption></figure>
+    </div>
+    <figure><img src="Preview/layers_contact_sheet.png" alt="64枚の層画像の一覧"><figcaption>layers_contact_sheet.png · 64枚の断面（左上が地面側の000、右下が頭頂の063）</figcaption></figure>
+    <dl id="qc"></dl>
+  </section>
 
   <section class="block">
     <div class="head"><h2>4方向のプレビュー</h2><p>Preview/front.png · side.png · back.png · top.png（3Dモデルからの直交投影）</p></div>
@@ -134,6 +146,17 @@ async function main() {
   } catch (e) { $("badge").textContent = "形状データを読み込めませんでした"; $("badge").classList.add("err"); return; }
 
   $("est").innerHTML = shape.estimated.map(s => `<li>${s}</li>`).join("");
+  try {
+    const cfg = await (await fetch("Body/stack_config.json")).json(), q = cfg.quality_checks;
+    $("qc").innerHTML = `
+      <dt>層</dt><dd>${q.count} 枚 · 512×512 RGBA ${q.all_512_rgba ? "OK" : "NG"} · 空の層 ${q.empty_layers.length}</dd>
+      <dt>層の間隔</dt><dd>${cfg.layer_spacing_px.toFixed(2)} px（均等）</dd>
+      <dt>透明部の色残り</dt><dd>${q.colour_in_transparent_px} px</dd>
+      <dt>中心のずれ</dt><dd>${q.centre_x_drift_px.toFixed(2)} px（全層）</dd>
+      <dt>断面と3Dの差</dt><dd>平均 ${q.layer_extent_error_sheet_px.mean.toFixed(2)} / 最大 ${q.layer_extent_error_sheet_px.max.toFixed(2)} px</dd>
+      <dt>縞の指標</dt><dd>正面 ${q.stripes_front.p95_second_diff.toFixed(2)} · 背面 ${q.stripes_back.p95_second_diff.toFixed(2)}（明るさの2階差 95%値）</dd>
+      <dt>回転時の面積の跳び</dt><dd>${(q.turn_area_max_jump * 100).toFixed(1)} %（10°ごと）</dd>`;
+  } catch (e) { $("qc").innerHTML = "<dt>品質チェック</dt><dd>読み込めませんでした</dd>"; }
   $("facts").innerHTML = `
     <dt>高さ</dt><dd>${(shape.top - shape.bottom).toFixed(0)} px（底 ${shape.bottom.toFixed(0)} – 頭頂 ${shape.top.toFixed(0)}）</dd>
     <dt>最大の幅</dt><dd>${(report.max_half_width_px * 2).toFixed(0)} px</dd>

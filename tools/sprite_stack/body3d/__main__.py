@@ -1,7 +1,9 @@
 """python -m tools.sprite_stack.body3d --input input/views_apose.png --out output/body3d
 
-STEP 1-3 only: analyse the 4 views, build the 3D body, render front / side /
-back / top previews of the 3D shape. No sprite-stack conversion yet.
+STEP 1-3: analyse the 4 views, build the 3D body, render front / side / back /
+top previews of the 3D shape.
+With --stack also STEP 4-6: shape checks, slice into 64 layers, export PNGs +
+stack_config.json + previews + Source/ (mesh, profiles, scripts).
 """
 from __future__ import annotations
 
@@ -13,7 +15,7 @@ import numpy as np
 from PIL import Image
 
 from ..views import load_views
-from . import analyze, model, preview
+from . import analyze, checks, model, preview, stack
 
 
 def main(argv=None):
@@ -31,6 +33,11 @@ def main(argv=None):
                     help="crown height = leaf base + this fraction of the body height (0 = from --head-aspect)")
     ap.add_argument("--width-top-margin", type=float, default=0.28,
                     help="stop measuring the width this far (fraction of height) below the leaf base")
+    ap.add_argument("--stack", action="store_true", help="also run STEP 4-6 (checks, 64 layers, export)")
+    ap.add_argument("--layers", type=int, default=64)
+    ap.add_argument("--size", type=int, default=512)
+    ap.add_argument("--scale", type=float, default=1.2, help="canvas px per sheet px")
+    ap.add_argument("--squash", type=float, default=0.75, help="preview camera pitch (vertical squash)")
     a = ap.parse_args(argv)
     for d in ("Preview", "Source"):
         os.makedirs(os.path.join(a.out, d), exist_ok=True)
@@ -93,7 +100,38 @@ def main(argv=None):
               "superellipse_p": p, "measured": shape.measured, "estimated": shape.estimated}
     with open(P("Source", "analysis.json"), "w") as fh:
         json.dump(report, fh, indent=2, ensure_ascii=False)
-    print(json.dumps(report, indent=1, ensure_ascii=False))
+    if not a.stack:
+        print(json.dumps(report, indent=1, ensure_ascii=False))
+        return
+    # STEP 4
+    chk = checks.run(shape, mF, mB, mS)
+    with open(P("Source", "shape_checks.json"), "w") as fh:
+        json.dump(chk, fh, indent=2, ensure_ascii=False)
+    print("STEP 4 problems:", chk["problems"] or "none")
+    if chk["problems"]:
+        raise SystemExit("shape checks failed; fix the shape before slicing")
+    # STEP 5-6
+    cfg = stack.export(shape, pal, a.out, a.layers, a.size, a.scale, a.squash)
+    copy_sources(P("Source", "scripts"))
+    print(json.dumps(cfg["quality_checks"], indent=1))
+
+
+def copy_sources(dst):
+    """Ship the generator scripts with the assets (Source/scripts)."""
+    import shutil
+    here = os.path.dirname(os.path.abspath(__file__))
+    pkg = os.path.dirname(here)
+    os.makedirs(os.path.join(dst, "sprite_stack", "body3d"), exist_ok=True)
+    for f in ("__init__.py", "views.py"):
+        shutil.copy(os.path.join(pkg, f), os.path.join(dst, "sprite_stack", f))
+    for f in os.listdir(here):
+        if f.endswith(".py"):
+            shutil.copy(os.path.join(here, f), os.path.join(dst, "sprite_stack", "body3d", f))
+    with open(os.path.join(dst, "README.md"), "w") as fh:
+        fh.write("# Generator scripts\n\n"
+                 "Copied from tools/sprite_stack. Requires Python 3, numpy, scipy, Pillow.\n\n"
+                 "```\npython -m sprite_stack.body3d --input views_apose.png --stack --out out\n```\n"
+                 "Run from this folder (so that `sprite_stack` is importable).\n")
 
 
 if __name__ == "__main__":
