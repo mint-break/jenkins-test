@@ -21,8 +21,12 @@ def main(argv=None):
     ap.add_argument("--input", default="input/views_apose.png")
     ap.add_argument("--order", default="front,side,back,top", help="views in reading order")
     ap.add_argument("--out", default="output/body3d")
-    ap.add_argument("--head-aspect", type=float, default=0.85,
+    ap.add_argument("--head-aspect", type=float, default=1.0,
                     help="head dome: 1 = round, smaller = flatter")
+    ap.add_argument("--round-top", type=float, default=0.0,
+                    help="0..1: narrow the crown width towards the depth (0 = off)")
+    ap.add_argument("--width-top-margin", type=float, default=0.10,
+                    help="stop measuring the width this far (fraction of height) below the leaf base")
     a = ap.parse_args(argv)
     for d in ("Preview", "Source"):
         os.makedirs(os.path.join(a.out, d), exist_ok=True)
@@ -34,7 +38,8 @@ def main(argv=None):
     mB = analyze.measure(views["back"], "frontback")
     mS = analyze.measure(views["side"], "side")
     # STEP 2 (shape first with a provisional roundness, then fit it to the top view)
-    shape = model.build(mF, mB, mS, 2.0, head_aspect=a.head_aspect)
+    shape = model.build(mF, mB, mS, 2.0, head_aspect=a.head_aspect, round_top=a.round_top,
+                        width_top_margin=a.width_top_margin)
     hs = np.linspace(shape.bottom, shape.top, 500)
     hw = hs[int(np.argmax(shape.w(hs)))]
     p, p_err, _ = analyze.top_view_exponent(views["top"], float(shape.w(hw)), float(shape.db(hw)))

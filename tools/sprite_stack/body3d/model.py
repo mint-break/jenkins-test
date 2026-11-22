@@ -190,9 +190,26 @@ class BodyShape:
             json.dump(data, fh, indent=1, ensure_ascii=False)
 
 
+class _RoundTop:
+    """Above `h0` blend the width towards the side-view depth, reaching `amount`
+    at the head top: the crown becomes a round dome instead of a ridge
+    (width >> depth there). The side silhouette is left as measured."""
+
+    def __init__(self, f, w, df, db, h0, top, amount):
+        self.f, self.w, self.df, self.db = f, w, df, db
+        self.h0, self.top, self.amount = h0, top, amount
+
+    def __call__(self, h):
+        h = np.asarray(h, float)
+        t = np.clip((h - self.h0) / max(self.top - self.h0, 1e-6), 0, 1)
+        t = t * t * (3 - 2 * t) * self.amount
+        m = 0.5 * (self.df(h) + self.db(h))          # the (narrower) depth from the side view
+        return self.f(h) * (1 - t) + np.minimum(m, self.f(h)) * t
+
+
 def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
-          head_aspect: float = 0.85, smooth_px: float = 1.5, side_top_margin: float = 0.10,
-          base_round: float = 0.08) -> BodyShape:
+          head_aspect: float = 1.0, smooth_px: float = 1.5, side_top_margin: float = 0.10,
+          base_round: float = 0.08, round_top: float = 0.0, width_top_margin: float = 0.10) -> BodyShape:
     Hs = side.notes["leaf_base_h"] - side.notes["body_bottom_h"]
     # width: four edges (front L/R, back L/R) -> one symmetric profile
     hW = np.concatenate([front.h, front.h, back.h, back.h])
@@ -217,7 +234,10 @@ def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
     bottom = float(np.median([front.notes["body_bottom_h"], back.notes["body_bottom_h"]]))
     # bottom cap starts a little above the feet so the base edge is softly rounded
     lo = max(lo_w, lo_f, lo_b2) + base_round * Hs
-    hi_w_ = hi_w
+    # the head is closed by a dome from a little below the leaf base in BOTH profiles:
+    # a rounder crown than following the wide leaf-base outline to the very top
+    Hf = front.notes["leaf_base_h"] - front.notes["body_bottom_h"]
+    hi_w_ = min(hi_w, front.notes["leaf_base_h"] - width_top_margin * Hf)
     hi_d = min(hi_f, hi_b)
     # head top from the width profile: slope-matched ellipse with the given aspect
     r_m, sl = float(sw(hi_w_)), float(sw.derivative()(hi_w_))
@@ -230,6 +250,10 @@ def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
     df = Profile1D(sf, lo, hi_d, bottom, top).close()
     db = Profile1D(sb, lo, hi_d, bottom, top).close()
 
+    if round_top > 0:
+        h0 = hi_d                         # start where the depth stops being measured
+        w0, df0, db0 = w, df, db
+        w = _RoundTop(w0, w0, df0, db0, h0, top, round_top)   # only the width narrows; side view kept
     shape = BodyShape(w, df, db, p, bottom, top)
     shape.measured = {
         "front": front.notes, "back": back.notes, "side": side.notes,
@@ -239,13 +263,15 @@ def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
         "back_front_depth_ratio_at_tail": ratio,
     }
     shape.estimated = [
-        f"head top: width measured up to h={hi_w_:.0f}px (leaf base), depth up to h={hi_d:.0f}px "
+        f"head top: width measured up to h={hi_w_:.0f}px, depth up to h={hi_d:.0f}px "
         f"(the leaf overlaps the back of the head in the side view); slope-matched ellipse caps "
         f"close at h={top:.0f}px",
         f"body bottom: rounded from h={lo:.0f}px down to h={bottom:.0f}px (feet cover it; the end "
         "height is the body's lower outline seen between the feet)",
         "sides behind the arms: spline bridged between the measured rows above and below the arms",
         f"back behind the tail: front edge x {ratio:.2f} (back/front ratio just above the tail)",
+        f"head top roundness: above h={hi_d:.0f}px the width narrows towards the side-view depth "
+        f"({round_top * 100:.0f}% at the top) so the crown is a round dome; dome aspect {head_aspect}",
         "left/right symmetry: front and back edges on both sides averaged into one width",
     ]
     return shape
