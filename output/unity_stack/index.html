@@ -1,0 +1,369 @@
+<meta charset="utf-8">
+<title>Mint Unity Stack</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: asset inspector. Live stack on the left, controls on the right, then every layer file as a contact sheet, then config + notes. */
+:root {
+  --bg: #eef4f1; --panel: #ffffff; --fg: #1d2b25; --muted: #5d7068; --line: #d3e1db;
+  --accent: #2f8f6a; --accent-soft: #d6efe4; --stage: #dfe9e4; --hl: #e8553d; --warn: #9a6a12; --warn-soft: #fbf0d9;
+  --check-a: #e7eeeb; --check-b: #d6e1dc;
+  --f-display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --f-body: "M PLUS Rounded 1c", "Hiragino Sans", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121a17; --panel: #1a2420; --fg: #e3efe9; --muted: #93a8a0; --line: #2a3832;
+    --accent: #6fd3a8; --accent-soft: #1f3a2f; --stage: #18221e; --hl: #ff7a5c; --warn: #f0c060; --warn-soft: #3a3120;
+    --check-a: #1d2824; --check-b: #25322d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121a17; --panel: #1a2420; --fg: #e3efe9; --muted: #93a8a0; --line: #2a3832;
+  --accent: #6fd3a8; --accent-soft: #1f3a2f; --stage: #18221e; --hl: #ff7a5c; --warn: #f0c060; --warn-soft: #3a3120;
+  --check-a: #1d2824; --check-b: #25322d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: 1.5rem; margin: 0; }
+h2 { font-family: var(--f-display); font-size: 1.05rem; margin: 0; }
+.sub { color: var(--muted); margin: 0; }
+.chip { font-family: var(--f-mono); font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--fg); }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 16px; }
+@media (max-width: 780px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; border-radius: 14px; overflow: hidden; min-height: 460px; background: var(--stage); touch-action: none; cursor: grab; }
+.stage.checker, .checker {
+  background-color: var(--check-a);
+  background-image: linear-gradient(45deg, var(--check-b) 25%, transparent 25%), linear-gradient(-45deg, var(--check-b) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--check-b) 75%), linear-gradient(-45deg, transparent 75%, var(--check-b) 75%);
+  background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+.stage.dark { background: #1b211f; }
+.stage:active { cursor: grabbing; }
+canvas#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.badge { position: absolute; left: 12px; bottom: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); pointer-events: none; font-variant-numeric: tabular-nums; }
+.stage.dark .badge, .stage.dark .hint { color: #a9bab3; }
+.hint { position: absolute; right: 12px; top: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.field { display: grid; gap: 6px; }
+.lbl, .field label { font-size: 12px; color: var(--muted); letter-spacing: .04em; display: flex; justify-content: space-between; gap: 8px; }
+.field output { font-family: var(--f-mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.checks { display: grid; gap: 8px; }
+.checks label { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+.checks input { accent-color: var(--accent); width: 16px; height: 16px; }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.seg button {
+  font: inherit; font-size: 12px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 800; }
+button:focus-visible, input:focus-visible, .cell:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.parts { display: grid; gap: 6px; }
+.parts label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.parts small { font-family: var(--f-mono); color: var(--muted); }
+.todo { color: var(--muted); font-size: 12px; margin: 0; }
+section.block { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.block-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; }
+.block-head p { margin: 0; color: var(--muted); font-size: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.cell { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: pointer; background: none; padding: 0; color: var(--fg); font: inherit; text-align: left; }
+.cell[aria-pressed="true"] { border-color: var(--hl); box-shadow: 0 0 0 2px var(--hl); }
+.cell img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; }
+.cell span { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 11px; padding: 3px 6px; background: var(--panel); color: var(--muted); }
+.inspect { display: grid; grid-template-columns: minmax(0, 512px) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 780px) { .inspect { grid-template-columns: minmax(0, 1fr); } }
+.inspect .big { border-radius: 10px; border: 1px solid var(--line); width: 100%; max-width: 512px; aspect-ratio: 1; display: block; image-rendering: auto; }
+dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 13px; }
+dt { color: var(--muted); }
+dd { margin: 0; font-family: var(--f-mono); font-size: 12px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.est { background: var(--warn-soft); border-radius: 10px; padding: 12px 14px; }
+.est h3 { margin: 0 0 6px; font-size: 13px; color: var(--warn); }
+.est ul { margin: 0; padding-left: 18px; font-size: 13px; }
+details { font-size: 13px; }
+pre { margin: 8px 0 0; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow: auto; max-height: 360px; font-family: var(--f-mono); font-size: 12px; }
+.previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+figure { margin: 0; display: grid; gap: 6px; }
+figure img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #1b211f; }
+figcaption { font-size: 12px; color: var(--muted); }
+.err { color: var(--hl); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Mint Unity Stack</h1>
+    <span class="chip" id="stageChip">読み込み中</span>
+    <p class="sub">Unity用スプライトスタック素材。層ごとのPNGを <code>stack_config.json</code> どおりに積んで表示します</p>
+  </header>
+
+  <div class="main">
+    <div class="stage" id="stage">
+      <canvas id="view" aria-label="スタックのプレビュー。ドラッグで回転"></canvas>
+      <div class="hint">ドラッグで回転 · ホイールで拡大</div>
+      <div class="badge" id="badge"></div>
+    </div>
+    <aside class="panel">
+      <div class="field">
+        <span class="lbl">パーツ</span>
+        <div class="parts" id="parts"></div>
+        <p class="todo" id="todo"></p>
+      </div>
+      <div class="field">
+        <label for="pitch">見下ろし（縦の潰し） <output id="pitchOut"></output></label>
+        <input type="range" id="pitch" min="0.05" max="1" step="0.01" value="0.55">
+      </div>
+      <div class="field">
+        <label for="hmul">層の間隔の倍率 <output id="hmulOut"></output></label>
+        <input type="range" id="hmul" min="0" max="3" step="0.05" value="1">
+      </div>
+      <div class="field">
+        <label for="zoom">拡大 <output id="zoomOut"></output></label>
+        <input type="range" id="zoom" min="0.3" max="2" step="0.05" value="0.9">
+      </div>
+      <div class="field">
+        <label for="layer">強調する層 <output id="layerOut"></output></label>
+        <input type="range" id="layer" min="-1" max="63" step="1" value="-1">
+      </div>
+      <div class="field">
+        <span class="lbl">背景</span>
+        <div class="seg" id="bgSeg">
+          <button type="button" id="bg-plain" data-bg="plain" aria-pressed="true">無地</button>
+          <button type="button" id="bg-checker" data-bg="checker" aria-pressed="false">透過確認</button>
+          <button type="button" id="bg-dark" data-bg="dark" aria-pressed="false">暗い</button>
+        </div>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="spin" checked> 自動で回す</label>
+        <label><input type="checkbox" id="fill" checked> 層の間を埋める（各層を間隔分くり返し描く）</label>
+        <label><input type="checkbox" id="outline" checked> 輪郭線（表示時に付加）</label>
+      </div>
+    </aside>
+  </div>
+
+  <section class="block">
+    <div class="block-head">
+      <h2 id="layersTitle">層ファイル</h2>
+      <p>クリックで強調と拡大表示 · 512×512 RGBA · チェック柄は透明部分</p>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="inspect">
+      <img class="big checker" id="big" alt="選択した層の拡大表示">
+      <dl id="layerInfo"></dl>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>設定と推定箇所</h2><p>Config/stack_config.json</p></div>
+    <dl id="cfgInfo"></dl>
+    <div class="est"><h3>推定した部分（元絵から直接は測れない形）</h3><ul id="estList"></ul></div>
+    <details><summary>stack_config.json の全文</summary><pre id="cfgRaw"></pre></details>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>書き出し済みプレビュー</h2><p>Preview/ フォルダの画像</p></div>
+    <div class="previews">
+      <figure><img src="Preview/body_turntable.gif" alt="胴体の回転プレビュー"><figcaption>body_turntable.gif · 48コマで1回転</figcaption></figure>
+      <figure><img src="Preview/body_vs_art.png" alt="推定した胴体輪郭と元絵の重ね合わせ"><figcaption>body_vs_art.png · 赤線が推定した胴体の輪郭</figcaption></figure>
+      <figure><img src="Preview/body_turntable_16.png" alt="16方向のプレビュー"><figcaption>body_turntable_16.png · 16方向</figcaption></figure>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PLANNED = ["Leaves", "Limbs", "Face", "Bread"];
+const view = $("view"), ctx = view.getContext("2d");
+const off = document.createElement("canvas"), octx = off.getContext("2d");
+const tint = document.createElement("canvas"), tctx = tint.getContext("2d");
+const S = { cfg: null, parts: [], items: [], yaw: 0, spin: true, drag: false, lastX: 0, lastT: 0, dirty: true, sel: -1 };
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+const loadImg = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(src); i.src = src; });
+
+async function init() {
+  let cfg;
+  try { cfg = await (await fetch("Config/stack_config.json")).json(); }
+  catch (e) { $("stageChip").textContent = "設定を読み込めませんでした"; $("stageChip").classList.add("err"); return; }
+  S.cfg = cfg;
+  $("stageChip").textContent = cfg.stage === "body prototype" ? "胴体の試作" : cfg.stage;
+  for (const p of cfg.parts) {
+    const imgs = await Promise.all(p.files.map(loadImg));
+    S.parts.push({ ...p, imgs, visible: true });
+  }
+  buildPartsUI(); rebuildItems(); buildGrid(); showConfig(); selectLayer(-1); syncOut();
+}
+
+/* every visible layer of every part, drawn in order of height */
+function rebuildItems() {
+  S.items = [];
+  S.parts.forEach((p, pi) => {
+    if (!p.visible) return;
+    p.imgs.forEach((img, i) => S.items.push({ img, part: pi, index: i, h: p.layer_height_px[i] + (p.position_px?.[1] || 0),
+      spacing: p.layer_spacing_px, pos: p.position_px || [0, 0, 0] }));
+  });
+  S.items.sort((a, b) => a.h - b.h || a.part - b.part);
+  S.dirty = true;
+}
+
+function buildPartsUI() {
+  const el = $("parts"); el.innerHTML = "";
+  S.parts.forEach((p, i) => {
+    const l = document.createElement("label");
+    l.innerHTML = `<span><input type="checkbox" id="part-${i}" checked> ${p.name}</span><small>${p.layers}層</small>`;
+    l.querySelector("input").addEventListener("change", (e) => { p.visible = e.target.checked; rebuildItems(); });
+    el.appendChild(l);
+  });
+  const missing = PLANNED.filter(n => !S.parts.some(p => p.name === n));
+  $("todo").textContent = missing.length ? `未制作: ${missing.join(" / ")}（胴体の確認後に追加）` : "";
+}
+
+function buildGrid() {
+  const p = S.parts[0], g = $("grid"); g.innerHTML = "";
+  $("layersTitle").textContent = `層ファイル · ${p.folder}/ ${p.layers}枚`;
+  $("layer").max = p.layers - 1;
+  p.imgs.forEach((img, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "cell"; b.id = `cell-${i}`;
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<img class="checker" alt="${p.files[i]}" src="${img.src}"><span><b>${String(i).padStart(3, "0")}</b>${p.layer_height_px[i].toFixed(1)}px</span>`;
+    b.addEventListener("click", () => selectLayer(S.sel === i ? -1 : i));
+    g.appendChild(b);
+  });
+}
+
+function selectLayer(i) {
+  S.sel = i; $("layer").value = i; syncOut();
+  document.querySelectorAll(".cell").forEach((c, k) => c.setAttribute("aria-pressed", k === i));
+  const p = S.parts[0], k = i < 0 ? 0 : i;
+  $("big").src = p.imgs[k].src;
+  const img = p.imgs[k];
+  // measure opaque area of the chosen layer
+  const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height).data;
+  let n = 0, x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1, stray = 0;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    const q = (y * c.width + x) * 4, a = d[q + 3];
+    if (a) { n++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    else if (d[q] || d[q + 1] || d[q + 2]) stray++;
+  }
+  $("layerInfo").innerHTML = `
+    <dt>ファイル</dt><dd>${p.files[k]}</dd>
+    <dt>高さ</dt><dd>${p.layer_height_px[k].toFixed(2)} px（${k + 1} / ${p.layers} 層）</dd>
+    <dt>サイズ</dt><dd>${c.width} × ${c.height} px</dd>
+    <dt>不透明範囲</dt><dd>${n ? `${x1 - x0 + 1} × ${y1 - y0 + 1} px（x ${x0}–${x1}, y ${y0}–${y1}）` : "なし（空の層）"}</dd>
+    <dt>中心からのずれ</dt><dd>${n ? `x ${(((x0 + x1) / 2) - (c.width - 1) / 2).toFixed(1)} / y ${(((y0 + y1) / 2) - (c.height - 1) / 2).toFixed(1)} px` : "—"}</dd>
+    <dt>透明部の色残り</dt><dd>${stray ? `${stray} px あり` : "なし"}</dd>
+    <dt>向き</dt><dd>画像の下端がキャラの正面</dd>`;
+  S.dirty = true;
+}
+
+function showConfig() {
+  const c = S.cfg, p = c.parts[0];
+  $("cfgInfo").innerHTML = `
+    <dt>キャンバス</dt><dd>${c.canvas.width} × ${c.canvas.height} px · 原点 ${c.canvas.pivot_px.join(", ")}</dd>
+    <dt>原点の意味</dt><dd>${c.canvas.origin}</dd>
+    <dt>層の間隔</dt><dd>${p.layer_spacing_px.toFixed(3)} px（均等）</dd>
+    <dt>胴体の高さ</dt><dd>${c.units.body_height_px.toFixed(1)} px</dd>
+    <dt>断面</dt><dd>${p.cross_section.type} · p=${p.cross_section.exponent}</dd>
+    <dt>描画順</dt><dd>${p.draw_order}</dd>
+    <dt>陰影</dt><dd>${c.shading.style} · 光 ${c.shading.light_model_space.join(", ")}</dd>`;
+  $("estList").innerHTML = c.estimated.map(s => `<li>${s}</li>`).join("");
+  $("cfgRaw").textContent = JSON.stringify({ ...c, parts: c.parts.map(p => ({ ...p, files: [`${p.files[0]} … ${p.files[p.files.length - 1]}`] })) }, null, 2);
+}
+
+/* ---------- live stack ---------- */
+function render() {
+  if (!S.items.length) return;
+  const dpr = window.devicePixelRatio || 1, r = view.getBoundingClientRect();
+  const cw = Math.round(r.width * dpr), ch = Math.round(r.height * dpr);
+  if (view.width !== cw || view.height !== ch) { view.width = cw; view.height = ch; }
+  const n = S.cfg.canvas.width;
+  const squash = +$("pitch").value, hmul = +$("hmul").value;
+  const totalH = S.items[S.items.length - 1].h * hmul;
+  const fit = Math.min(cw / (n * 1.05), ch / (n * squash + totalH + 40));
+  const scale = fit * +$("zoom").value;
+  off.width = cw; off.height = ch;
+  octx.clearRect(0, 0, cw, ch); octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = "high";
+  const cx = cw / 2, by = ch / 2 + (totalH * scale) / 2;
+  const rad = S.yaw * Math.PI / 180, fill = $("fill").checked;
+  const hl = S.sel;
+  for (const it of S.items) {
+    const lift = it.h * hmul * scale, step = it.spacing * hmul * scale;
+    const copies = fill ? Math.max(1, Math.ceil(step)) : 1;
+    let src = it.img;
+    if (it.part === 0 && it.index === hl) src = tinted(it.img);
+    for (let k = 0; k < copies; k++) {
+      octx.setTransform(scale, 0, 0, scale * squash, cx, by - lift - (k * step) / copies);
+      octx.rotate(-rad);
+      octx.drawImage(src, -n / 2, -n / 2, n, n);
+    }
+  }
+  octx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cw, ch);
+  if ($("outline").checked) {
+    // dark silhouette drawn around the stack (outline is a display effect, not baked into the layers)
+    tint.width = cw; tint.height = ch;
+    tctx.drawImage(off, 0, 0); tctx.globalCompositeOperation = "source-in";
+    const o = S.cfg.shading?.palette?.outline || [40, 80, 62];
+    tctx.fillStyle = `rgb(${o.map(Math.round).join(",")})`; tctx.fillRect(0, 0, cw, ch); tctx.globalCompositeOperation = "source-over";
+    const w = Math.max(1, Math.round(2 * dpr));
+    for (const [dx, dy] of [[w, 0], [-w, 0], [0, w], [0, -w], [w, w], [-w, -w], [w, -w], [-w, w]]) ctx.drawImage(tint, dx, dy);
+  }
+  ctx.drawImage(off, 0, 0);
+  $("badge").textContent = `${((S.yaw % 360) + 360) % 360 | 0}° · ${S.items.length} 層表示中`;
+}
+
+const tintCache = new Map();
+function tinted(img) {
+  if (tintCache.has(img)) return tintCache.get(img);
+  const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext("2d"); g.drawImage(img, 0, 0); g.globalCompositeOperation = "source-atop";
+  g.fillStyle = cssVar("--hl") || "#e8553d"; g.globalAlpha = 0.8; g.fillRect(0, 0, c.width, c.height);
+  tintCache.set(img, c); return c;
+}
+
+/* ---------- controls ---------- */
+function syncOut() {
+  $("pitchOut").textContent = (+$("pitch").value).toFixed(2);
+  $("hmulOut").textContent = "×" + (+$("hmul").value).toFixed(2);
+  $("zoomOut").textContent = "×" + (+$("zoom").value).toFixed(2);
+  const l = +$("layer").value; $("layerOut").textContent = l < 0 ? "なし" : `Layer_${String(l).padStart(3, "0")}`;
+}
+["pitch", "hmul", "zoom", "fill", "outline"].forEach(id => $(id).addEventListener("input", () => { syncOut(); S.dirty = true; }));
+$("layer").addEventListener("input", () => selectLayer(+$("layer").value));
+$("spin").addEventListener("change", () => { S.spin = $("spin").checked; });
+if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { $("spin").checked = false; S.spin = false; }
+document.querySelectorAll("#bgSeg button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("#bgSeg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  $("stage").classList.toggle("checker", b.dataset.bg === "checker");
+  $("stage").classList.toggle("dark", b.dataset.bg === "dark");
+}));
+const st = $("stage");
+st.addEventListener("pointerdown", (e) => { S.drag = true; S.lastX = e.clientX; st.setPointerCapture(e.pointerId); });
+st.addEventListener("pointermove", (e) => { if (!S.drag) return; S.yaw += (e.clientX - S.lastX) * 0.6; S.lastX = e.clientX; S.dirty = true; });
+const end = () => { S.drag = false; };
+st.addEventListener("pointerup", end); st.addEventListener("pointercancel", end);
+st.addEventListener("wheel", (e) => {
+  e.preventDefault(); const z = $("zoom");
+  z.value = Math.min(+z.max, Math.max(+z.min, +z.value + (e.deltaY < 0 ? 0.05 : -0.05))); syncOut(); S.dirty = true;
+}, { passive: false });
+window.addEventListener("resize", () => { S.dirty = true; });
+
+let lastDraw = 0;
+function tick(t) {
+  const dt = S.lastT ? (t - S.lastT) / 1000 : 0; S.lastT = t;
+  if (S.spin && !S.drag) { S.yaw += dt * 36; S.dirty = true; }
+  if (S.dirty && t - lastDraw > 28) { render(); S.dirty = false; lastDraw = t; }
+  requestAnimationFrame(tick);
+}
+syncOut(); init(); requestAnimationFrame(tick);
+</script>
