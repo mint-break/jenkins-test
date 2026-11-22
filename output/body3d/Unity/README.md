@@ -11,7 +11,10 @@ been compiled or run in Unity yet. The lighting maths is the same as
 ## Steps
 1. Copy `Body/Albedo`, `Body/Normal`, `SpriteStackLit.shader` and `SpriteStackBody.cs` into `Assets/`.
 2. Albedo PNGs: Texture Type **Sprite (2D and UI)**, Sprite Mode Single, Pivot **Center**,
-   Pixels Per Unit e.g. 100, Filter Bilinear, Compression None (or High Quality).
+   Pixels Per Unit e.g. 100, Filter Bilinear, Compression None (or High Quality),
+   **Alpha Is Transparency ON**. The transparent pixels are black (rgb 0); without this option
+   bilinear filtering darkens every layer edge and the stack shows dark rings.
+   Generate Mip Maps ON if the stack is drawn much smaller than 512 px.
 3. Normal PNGs: Texture Type **Default**, **sRGB (Color Texture) off**, Compression None,
    Filter Bilinear. Do *not* import them as "Normal map" (that re-encodes the channels).
 4. Create a Material with shader **SpriteStack/Lit**.
@@ -26,4 +29,5 @@ been compiled or run in Unity yet. The lighting maths is the same as
 - Outline: render the stack to a RenderTexture and outline that once; do not outline layers.
 - Round the stack's screen position to whole pixels if it looks jittery.
 - Sort whole stacks against other objects by their ground point, not layer by layer.
-- Without the custom shader, use the baked `Body/Layer_###.png` (light from straight above).
+- Without the custom shader, use the baked `Body/Layer_###.png` (light from straight above),
+  with the same import settings as the Albedo PNGs (Alpha Is Transparency ON).

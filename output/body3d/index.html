@@ -135,7 +135,8 @@ figcaption { font-size: 12px; color: var(--muted); }
       <figure><img src="Preview/stacked_turntable.gif" alt="64層を重ねて回したアニメーション"><figcaption>stacked_turntable.gif · 48コマで1回転</figcaption></figure>
       <figure><img src="Preview/stacked_preview.png" alt="正面・斜め・側面・背面から見た重ねた結果"><figcaption>stacked_preview.png · 正面 / 斜め45° / 側面 / 背面</figcaption></figure>
     </div>
-    <figure><img src="Preview/layers_contact_sheet.png" alt="64枚の層画像の一覧"><figcaption>layers_contact_sheet.png · 64枚の断面（左上が地面側の000、右下が頭頂の063）</figcaption></figure>
+    <figure><img src="Preview/layers_contact_sheet.png" alt="64枚の層画像の一覧"><figcaption>layers_contact_sheet.png · 64枚の断面（焼き込み版。左上が地面側の000、右下が頭頂の063）</figcaption></figure>
+    <figure><img src="Preview/normals_contact_sheet.png" alt="64枚の法線マップの一覧"><figcaption>normals_contact_sheet.png · Body/Normal の法線マップ（赤=右向き、緑=奥向き、青=上向き）</figcaption></figure>
     <dl id="qc"></dl>
   </section>
 
@@ -185,7 +186,8 @@ async function main() {
       <dt>透明部の色残り</dt><dd>${q.colour_in_transparent_px} px</dd>
       <dt>中心のずれ</dt><dd>${q.centre_x_drift_px.toFixed(2)} px（全層）</dd>
       <dt>断面と3Dの差</dt><dd>平均 ${q.layer_extent_error_sheet_px.mean.toFixed(2)} / 最大 ${q.layer_extent_error_sheet_px.max.toFixed(2)} px</dd>
-      <dt>縞の指標</dt><dd>正面 ${q.stripes_front.p95_second_diff.toFixed(2)} · 背面 ${q.stripes_back.p95_second_diff.toFixed(2)}（明るさの2階差 95%値）</dd>
+      <dt>縞の指標</dt><dd>法線ライティング 正面 ${q.stripes_front_lit.p95_second_diff.toFixed(2)} · 背面 ${q.stripes_back_lit.p95_second_diff.toFixed(2)} · 焼き込み ${q.stripes_front_baked.p95_second_diff.toFixed(2)}（明るさの2階差 95%値）</dd>
+      <dt>法線マップ</dt><dd>長さの誤差 ${q.normal_maps.unit_length_error_p99.toFixed(4)} · 色の層との範囲ずれ ${q.normal_maps.coverage_mismatch_px} px</dd>
       <dt>回転時の面積の跳び</dt><dd>${(q.turn_area_max_jump * 100).toFixed(1)} %（10°ごと）</dd>`;
   } catch (e) { $("qc").innerHTML = "<dt>品質チェック</dt><dd>読み込めませんでした</dd>"; }
   $("facts").innerHTML = `
@@ -330,13 +332,18 @@ async function stackViewer() {
   catch (e) { badge.textContent = "stack_config.json を読み込めませんでした"; return; }
   const L = cfg.layers, sp = cfg.layer_spacing_px, P = cfg.lighting.lit.shader_params, pal = cfg.lighting.palette_rgb;
   const loader = new THREE.TextureLoader();
-  const load = (u) => new Promise((res, rej) => loader.load(u, (t) => { t.minFilter = t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; res(t); }, undefined, rej));
+  // colour layers: premultiplied on upload + mipmaps, so filtering never pulls the edge towards the
+  // black transparent pixels (that would draw a dark ring at every layer edge)
+  const load = (u, premul) => new Promise((res, rej) => loader.load(u, (t) => {
+    t.premultiplyAlpha = premul; t.generateMipmaps = true;
+    t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; res(t);
+  }, undefined, rej));
   let alb, nor, bak;
   try {
     [alb, nor, bak] = await Promise.all([
-      Promise.all(cfg.lighting.lit.albedo_files.map(load)),
-      Promise.all(cfg.lighting.lit.normal_files.map(load)),
-      Promise.all(cfg.files.map(load))]);
+      Promise.all(cfg.lighting.lit.albedo_files.map(u => load(u, true))),
+      Promise.all(cfg.lighting.lit.normal_files.map(u => load(u, false))),
+      Promise.all(cfg.files.map(u => load(u, true)))]);
   } catch (e) { badge.textContent = "層の画像を読み込めませんでした"; return; }
   const v3 = (c) => new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255);
   const uni = {
@@ -354,7 +361,7 @@ async function stackViewer() {
     varying vec2 vUv;
     void main(){
       vec4 al = texture2D(tAlb, vUv);
-      if (uLit < 0.5) { vec4 b = texture2D(tBak, vUv); gl_FragColor = vec4(b.rgb * b.a, b.a); return; }
+      if (uLit < 0.5) { gl_FragColor = texture2D(tBak, vUv); return; }   // already premultiplied
       vec3 n = texture2D(tNor, vUv).rgb * 2.0 - 1.0;
       float c = cos(uYaw), s = sin(uYaw);
       n.xy = vec2(n.x * c - n.y * s, n.x * s + n.y * c); n = normalize(n);
@@ -365,8 +372,8 @@ async function stackViewer() {
       float g = smoothstep(uP2.x, uP2.y, dot(n, normalize(uL + V))) * smoothstep(uP3.x, uP3.y, uH);
       col = mix(col, uGloss, uP2.z * g);
       col *= 1.0 - uP2.w * smoothstep(0.35, 0.0, clamp(dot(n, V), 0.0, 1.0));
-      vec3 rgb = al.rgb * col / max(uBase, vec3(0.001));
-      gl_FragColor = vec4(rgb * al.a, al.a);
+      vec3 rgb = al.rgb * col / max(uBase, vec3(0.001));      // al.rgb is premultiplied
+      gl_FragColor = vec4(rgb, al.a);
     }`;
   const stage = document.getElementById("stackStage");
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, premultipliedAlpha: true });

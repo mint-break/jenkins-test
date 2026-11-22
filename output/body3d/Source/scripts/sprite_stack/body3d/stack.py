@@ -44,7 +44,15 @@ def shade_top(n, hnorm, pal):
     return np.clip(col, 0, 255)
 
 
-def make_layers(shape: BodyShape, pal, layers=64, size=512, scale=1.2):
+def make_layers(shape: BodyShape, pal, layers=64, size=512, scale=1.2, with_maps=False):
+    """Returns (baked RGBA layers, slab bottoms, spacing) and, with with_maps,
+    also (albedo RGBA layers, normal RGBA layers).
+
+    Normal maps are in LAYER space: x = image right (+X), y = image up (the
+    character's back, +Z), z = out of the layer (world up, +Y); encoded as
+    rgb = n * 0.5 + 0.5. Alpha = coverage. Transparent pixels next to the edge
+    carry the nearest edge normal (padding against filtering), alpha 0.
+    """
     n = size
     c = (n - 1) / 2
     u, v = np.meshgrid(np.arange(n) - c, np.arange(n) - c)
@@ -52,23 +60,62 @@ def make_layers(shape: BodyShape, pal, layers=64, size=512, scale=1.2):
     Z = -v / scale                      # image down = front = -Z
     H = shape.top - shape.bottom
     dh = H / layers
-    out, heights = [], []
+    # Height of the body's upper surface above every pixel, and its normal there.
+    # Pixels of a layer that are seen from above show THIS surface, not the
+    # (near-horizontal) cross-section normal at the layer's height.
+    htop = np.full(X.shape, -1.0)
+    for hh in np.linspace(shape.top, shape.bottom, 900):
+        inside = (shape.F(X, np.full_like(X, hh), Z) <= 0) & (htop < 0)
+        htop[inside] = hh
+    has_top = htop >= 0
+    n_top = np.zeros(X.shape + (3,))
+    n_top[has_top] = shape.grad(X[has_top], htop[has_top], Z[has_top])
+    out, alb, nor, heights = [], [], [], []
     for i in range(layers):
         h = shape.bottom + (i + 0.5) * dh
+        hn = (h - shape.bottom) / H
         Y = np.full_like(X, h)
         f = shape.F(X, Y, Z) + 1.0       # superellipse value, < 1 inside
         gv, gu = np.gradient(f)          # per canvas px
         gl = np.hypot(gu, gv) + 1e-9
         alpha = np.clip(0.5 - (f - 1) / gl, 0, 1)
         img = np.zeros((n, n, 4), np.uint8)
+        a_img = np.zeros((n, n, 4), np.uint8)
+        n_img = np.zeros((n, n, 4), np.uint8)
         m = alpha > 0
         if m.any():
-            nrm = shape.grad(X[m], Y[m], Z[m])
-            img[m, :3] = shade_top(nrm, (h - shape.bottom) / H, pal).astype(np.uint8)
-            img[m, 3] = np.round(alpha[m] * 255).astype(np.uint8)
+            n_rim = shape.grad(X[m], Y[m], Z[m])
+            # distance to the cross-section edge vs. to the surface above (canvas px)
+            d_rim = np.clip((1 - f[m]) / gl[m], 0, None)
+            d_top = np.clip(htop[m] - h, 0, None) * scale
+            w = smoothstep(-3.0, 3.0, d_rim - d_top)[:, None]
+            nrm = n_rim * (1 - w) + n_top[m] * w
+            nrm /= np.linalg.norm(nrm, axis=-1, keepdims=True) + 1e-12
+            a8 = np.round(alpha[m] * 255).astype(np.uint8)
+            img[m, :3] = shade_top(nrm, hn, pal).astype(np.uint8)
+            img[m, 3] = a8
+            if with_maps:
+                base = np.asarray(pal["base"], np.float32) * (0.965 + 0.05 * hn)
+                a_img[m, :3] = np.clip(base, 0, 255).astype(np.uint8)
+                a_img[m, 3] = a8
+                ls = np.stack([nrm[:, 0], nrm[:, 2], nrm[:, 1]], -1)       # layer space
+                n_img[m, :3] = np.clip(np.round((ls * 0.5 + 0.5) * 255), 0, 255).astype(np.uint8)
+                n_img[m, 3] = a8
         img[img[..., 3] == 0, :3] = 0    # nothing left in transparent pixels
+        if with_maps:
+            a_img[a_img[..., 3] == 0, :3] = 0
+            # normal padding: copy the nearest covered normal into a 4px ring (alpha stays 0)
+            cov = n_img[..., 3] > 0
+            if cov.any():
+                d, (iy, ix) = nd.distance_transform_edt(~cov, return_indices=True)
+                pad = (~cov) & (d <= 4)
+                n_img[pad, :3] = n_img[iy[pad], ix[pad], :3]
+            alb.append(a_img)
+            nor.append(n_img)
         out.append(img)
         heights.append(i * dh * scale)  # bottom of the slab, canvas px above the first layer
+    if with_maps:
+        return out, np.array(heights), dh * scale, alb, nor
     return out, np.array(heights), dh * scale
 
 
@@ -214,26 +261,55 @@ def export(shape: BodyShape, pal, out_dir, layers=64, size=512, scale=1.2, squas
     prev_dir = os.path.join(out_dir, "Preview")
     os.makedirs(body_dir, exist_ok=True)
     os.makedirs(prev_dir, exist_ok=True)
-    imgs, heights, spacing = make_layers(shape, pal, layers, size, scale)
+    from . import lit
+    imgs, heights, spacing, albedo, normals = make_layers(shape, pal, layers, size, scale, with_maps=True)
+    for sub in ("Albedo", "Normal"):
+        os.makedirs(os.path.join(body_dir, sub), exist_ok=True)
     files = []
     for i, L in enumerate(imgs):
         fn = f"Layer_{i:03d}.png"
         Image.fromarray(L, "RGBA").save(os.path.join(body_dir, fn))
+        Image.fromarray(albedo[i], "RGBA").save(os.path.join(body_dir, "Albedo", fn))
+        Image.fromarray(normals[i], "RGBA").save(os.path.join(body_dir, "Normal", fn))
         files.append(fn)
     # read back what was written: every check and preview uses the PNG files
-    disk = [np.asarray(Image.open(os.path.join(body_dir, f)).convert("RGBA")) for f in files]
+    rd = lambda *p_: np.asarray(Image.open(os.path.join(body_dir, *p_)).convert("RGBA"))  # noqa: E731
+    disk = [rd(f) for f in files]
+    disk_a = [rd("Albedo", f) for f in files]
+    disk_n = [rd("Normal", f) for f in files]
+    h01 = (np.arange(layers) + 0.5) / layers
 
+    # baked (top light) previews
     frames = turntable(disk, spacing, 16, squash=squash)
-    sheet(frames, 8).save(os.path.join(prev_dir, "stacked_turntable_16.png"))
-    save_gif(turntable(disk, spacing, 48, squash=squash), os.path.join(prev_dir, "stacked_turntable.gif"))
+    sheet(frames, 8).save(os.path.join(prev_dir, "stacked_baked_turntable_16.png"))
     hero = [stack_frame(disk, spacing, yaw, squash=squash, out_scale=0.75) for yaw in (0, -45, -90, 180)]
-    sheet(hero, 4).save(os.path.join(prev_dir, "stacked_preview.png"))
+    sheet(hero, 4).save(os.path.join(prev_dir, "stacked_preview_baked.png"))
+    # screen-fixed light from the normal maps (what SpriteStackLit.shader renders)
+    lf = lambda yaw, sc: lit.lit_frame(disk_a, disk_n, spacing, yaw, pal, squash, sc, heights01=h01)  # noqa: E731
+    sheet([lf(yaw, 0.75) for yaw in (0, -45, -90, 180)], 4).save(os.path.join(prev_dir, "stacked_preview.png"))
+    sheet([lf(360.0 * i / 16, 0.5) for i in range(16)], 8).save(os.path.join(prev_dir, "stacked_turntable_16.png"))
+    save_gif([lf(360.0 * i / 24, 0.5) for i in range(24)], os.path.join(prev_dir, "stacked_turntable.gif"), ms=110)
 
     checks = verify(disk, shape, scale, spacing)
-    checks["stripes_front"] = stripe_metric(stack_frame(disk, spacing, 0, squash=squash, out_scale=1.0,
-                                                        outline=None))
-    checks["stripes_back"] = stripe_metric(stack_frame(disk, spacing, 180, squash=squash, out_scale=1.0,
-                                                       outline=None))
+    checks["stripes_front_baked"] = stripe_metric(stack_frame(disk, spacing, 0, squash=squash, out_scale=1.0,
+                                                              outline=None))
+    checks["stripes_front_lit"] = stripe_metric(lit.lit_frame(disk_a, disk_n, spacing, 0, pal, squash, 1.0,
+                                                              outline=None, heights01=h01))
+    checks["stripes_back_lit"] = stripe_metric(lit.lit_frame(disk_a, disk_n, spacing, 180, pal, squash, 1.0,
+                                                             outline=None, heights01=h01))
+    # normal maps: unit length where covered, same coverage as the colour layers
+    lens, cov_diff = [], 0
+    for A, Nm in zip(disk, disk_n):
+        m = A[..., 3] > 0
+        v = Nm[m][:, :3].astype(float) / 255 * 2 - 1
+        if len(v):
+            lens.append(np.abs(np.linalg.norm(v, axis=1) - 1))
+        cov_diff += int(((A[..., 3] > 0) != (Nm[..., 3] > 0)).sum())
+    lens = np.concatenate(lens)
+    checks["normal_maps"] = {"unit_length_error_p99": float(np.percentile(lens, 99)),
+                             "coverage_mismatch_px": cov_diff}
+    checks["albedo_colour_in_transparent_px"] = int(sum(int((L[L[..., 3] == 0][:, :3] != 0).sum())
+                                                        for L in disk_a))
     # silhouette area over a full turn (should vary smoothly, no popping)
     areas = []
     for yaw in range(0, 360, 10):
@@ -273,14 +349,31 @@ def export(shape: BodyShape, pal, out_dir, layers=64, size=512, scale=1.2, squas
             "positions": "round screen positions to whole pixels",
             "sorting": "sort whole stacks by their ground point, not layer by layer",
         },
-        "lighting": {"model": "soft cel, baked, light from straight above (rotation invariant)",
-                     "palette_rgb": {k: [int(round(x)) for x in v] for k, v in pal.items()}},
+        "lighting": {
+            "recommended": "lit: Albedo + Normal layers with Unity/SpriteStackLit.shader (light fixed on screen)",
+            "lit": {"albedo_files": [f"Body/Albedo/{f}" for f in files],
+                    "normal_files": [f"Body/Normal/{f}" for f in files],
+                    "normal_space": "layer space: x = image right, y = image up (character's back), "
+                                    "z = out of the layer (world up); rgb = n * 0.5 + 0.5; import as a plain "
+                                    "texture with sRGB off (not as 'Normal map')",
+                    "normal_padding": "transparent pixels within 4px of the edge hold the nearest edge "
+                                      "normal (alpha 0) so texture filtering does not tilt edge normals",
+                    "rotate_normals_with_yaw": True,
+                    "shader_params": lit.PARAMS},
+            "baked": {"files": "Body/Layer_###.png",
+                      "model": "soft cel, light from straight above (rotation invariant), fallback "
+                               "when no custom shader is used"},
+            "palette_rgb": {k: [int(round(x)) for x in v] for k, v in pal.items()}},
         "parts": {"Body": {"layers": layers, "parent": None, "offset_px": [0, 0, 0]},
                   "planned": ["Leaves", "Face", "Arms", "Feet", "Tail"],
                   "attach_note": "future parts use the same canvas size, pivot and spacing; "
                                  "their layer_height_px is measured from the same base"},
         "source": {"mesh": "Source/body.obj", "profiles": "Source/body_shape.json",
-                   "analysis": "Source/analysis.json"},
+                   "analysis": "Source/analysis.json", "shape_checks": "Source/shape_checks.json",
+                   "scripts": "Source/scripts"},
+        "unity": {"shader": "Unity/SpriteStackLit.shader", "builder": "Unity/SpriteStackBody.cs",
+                  "readme": "Unity/README.md", "pipeline": "Built-in (Unity 2020.3)",
+                  "status": "not compiled in Unity yet (no editor in the build environment)"},
         "body_height_sheet_px": H,
         "quality_checks": checks,
         "estimated": shape.estimated,
