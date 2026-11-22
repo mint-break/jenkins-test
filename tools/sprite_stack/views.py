@@ -61,13 +61,21 @@ def load_views(path: str, grid: str = "auto", order: str = ",".join(VIEW_NAMES),
     """
     img = np.asarray(Image.open(path).convert("RGBA")).astype(np.float32)
     H, W = img.shape[:2]
+    names = [s.strip() for s in order.split(",")]
+    if sorted(names) != sorted(VIEW_NAMES):
+        raise ValueError(f"order must list {VIEW_NAMES} once each")
+    if grid in ("auto", "blobs"):
+        views = _load_blobs(img, names, bg_threshold, keep_ratio)
+        if views is not None:
+            return views
+        if grid == "blobs":
+            raise ValueError("could not find exactly 4 separate views in the sheet")
     if grid == "auto":
         cols, rows = (4, 1) if W / H >= 3 else (2, 2)
     else:
         cols, rows = (int(v) for v in grid.lower().split("x"))
-    names = [s.strip() for s in order.split(",")]
-    if sorted(names) != sorted(VIEW_NAMES) or len(names) != cols * rows:
-        raise ValueError(f"order must list {VIEW_NAMES} once each for a {cols}x{rows} grid")
+    if len(names) != cols * rows:
+        raise ValueError(f"order must have {cols * rows} entries for a {cols}x{rows} grid")
 
     views = {}
     for i, name in enumerate(names):
@@ -77,6 +85,55 @@ def load_views(path: str, grid: str = "auto", order: str = ",".join(VIEW_NAMES),
         ys, xs = np.nonzero(mask)
         sl = (slice(ys.min(), ys.max() + 1), slice(xs.min(), xs.max() + 1))
         views[name] = View(name, cell[sl][..., :3].copy(), mask[sl].copy())
+    return views
+
+
+def _load_blobs(img, names, bg_threshold, keep_ratio):
+    """Find the 4 views as the 4 largest separate blobs, whatever the layout.
+
+    Blobs are ordered in reading order (rows by vertical centre, then x).
+    Captions are smaller blobs and are ignored. Returns None if the sheet does
+    not split into exactly 4 large blobs.
+    """
+    if img[..., 3].min() < 250:
+        mask = img[..., 3] > 127
+    else:
+        mask = img[..., :3].max(-1) > bg_threshold
+    # bridge 1-2 px gaps inside a view (thin outlines) but not the space between views
+    closed = nd.binary_closing(mask, iterations=3)
+    lab, n = nd.label(closed)
+    if n < 4:
+        return None
+    sizes = nd.sum(closed, lab, range(1, n + 1))
+    order = np.argsort(sizes)[::-1]
+    big = [k + 1 for k in order if sizes[k] >= sizes[order[0]] * keep_ratio]
+    if len(big) != 4:
+        return None
+    boxes = nd.find_objects(lab)
+    items = []
+    for k in big:
+        sl = boxes[k - 1]
+        cy = (sl[0].start + sl[0].stop) / 2
+        items.append((cy, sl[1].start, k, sl))
+    items.sort()
+    # group into rows: a new row starts when the centre jumps by > 1/3 of a view height
+    rows, cur = [], [items[0]]
+    for it in items[1:]:
+        h = cur[-1][3][0].stop - cur[-1][3][0].start
+        if abs(it[0] - cur[-1][0]) > h / 3:
+            rows.append(cur)
+            cur = [it]
+        else:
+            cur.append(it)
+    rows.append(cur)
+    ordered = [it for r in rows for it in sorted(r, key=lambda t: t[1])]
+    views = {}
+    for name, (_, _, k, sl) in zip(names, ordered):
+        m = (lab[sl] == k) & mask[sl]
+        m = nd.binary_fill_holes(m)
+        ys, xs = np.nonzero(m)
+        sub = (slice(ys.min(), ys.max() + 1), slice(xs.min(), xs.max() + 1))
+        views[name] = View(name, img[sl][sub][..., :3].copy(), m[sub].copy())
     return views
 
 

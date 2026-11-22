@@ -1,6 +1,7 @@
-"""CLI:  python -m tools.sprite_stack --input input/views.png --layers 32 --out output
+"""CLI:  python -m tools.sprite_stack --input input/views.png --res 64 --layers 9 --out output
 
-Pipeline: view sheet -> visual hull voxels -> slice strip -> turntable previews -> OBJ.
+Pipeline: view sheet -> visual hull voxels -> layers (thick body tiers + fine
+appendage layers) -> slice strip -> turntable previews -> OBJ.
 The slices are always cut from the voxel data; nothing is drawn per layer.
 """
 from __future__ import annotations
@@ -41,7 +42,11 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--input", default="input/views.png")
     ap.add_argument("--out", default="output")
-    ap.add_argument("--layers", type=int, default=32, help="number of slices (= voxel height)")
+    ap.add_argument("--res", type=int, default=64, help="voxel height (shape resolution)")
+    ap.add_argument("--layers", type=int, default=9,
+                    help="number of body tiers (thick layers); 0 = one layer per voxel")
+    ap.add_argument("--top-layers", type=int, default=0,
+                    help="layers for the appendage on top (0 = one per voxel, keeps leaves thin)")
     ap.add_argument("--grid", default="auto", help="COLSxROWS of the sheet, e.g. 4x1 or 2x2")
     ap.add_argument("--order", default="top,front,side,back", help="view names, row-major")
     ap.add_argument("--bg-threshold", type=int, default=40,
@@ -57,7 +62,11 @@ def main(argv=None):
                     help="erase the --part object instead of carving it (e.g. no sandwich)")
     ap.add_argument("--colors", type=int, default=0, help="quantise voxel colours (0=off)")
     ap.add_argument("--dirs", type=int, default=16, help="turntable directions")
-    ap.add_argument("--scale", type=int, default=4, help="preview pixel scale")
+    ap.add_argument("--scale", type=int, default=6, help="preview pixel scale")
+    ap.add_argument("--smooth", action="store_true",
+                    help="rotate upscaled layers instead of pixel-art (1px per voxel) rendering")
+    ap.add_argument("--ridge", type=float, default=0.25, help="tier line / rim strength (0=off)")
+    ap.add_argument("--no-outline", action="store_true")
     ap.add_argument("--squash", type=float, default=0.6, help="vertical squash of layers (pitch)")
     ap.add_argument("--no-mesh", action="store_true")
     a = ap.parse_args(argv)
@@ -71,42 +80,52 @@ def main(argv=None):
         if a.remove_part:
             remove_part(views)
     debug_views(views, P("debug_views.png"))
-    model = build(views, a.layers, a.appendage, a.plate, a.round_exp)
+    model = build(views, a.res, a.appendage, a.plate, a.round_exp)
     if a.colors:
         quantize(model, a.colors)
+    neck = model.meta.get("neck_y")
+    bands = slices.plan_layers(model.occ.shape[1], a.layers, neck, a.top_layers)
+    st = slices.cut(model.occ, model.rgb, bands)
+    print(f"layers: {st.L} ({sum(1 for b in bands if neck is None or b[0] < neck)} body tiers"
+          f" + {sum(1 for b in bands if neck is not None and b[0] >= neck)} top), "
+          f"thickness {sorted(set(int(t) for t in st.thick))} voxels")
 
-    slices.write_strip(model, P("slices.png"))
-    occ2, rgb2 = slices.read_strip(P("slices.png"), a.layers)
-    same = np.array_equal(occ2, model.occ) and np.array_equal(rgb2[occ2], model.rgb[model.occ])
-    print(f"slice strip round-trip identical to voxels: {same}")
-    # stack/mesh renders use the slices read back from disk, i.e. the deliverable itself
-    occ, rgb = occ2, rgb2
+    slices.write_strip(st, P("slices.png"), model.meta)
+    back = slices.read_strip(P("slices.png"))
+    same = (np.array_equal(back.occ, st.occ) and np.array_equal(back.rgb[back.occ], st.rgb[st.occ])
+            and np.allclose(back.bottom, st.bottom) and np.allclose(back.thick, st.thick))
+    print(f"slice strip round-trip identical: {same}")
 
-    kw = dict(scale=a.scale, squash=a.squash)
-    flat = render.turntable(occ, rgb, a.dirs, **kw)
-    litf = render.turntable(occ, rgb, a.dirs, lit=True, **kw)
-    lit26 = render.turntable(occ, rgb, a.dirs, lit=True, normal_sigma=0, **kw)
+    kw = dict(scale=a.scale, squash=a.squash, pixel=not a.smooth, ridge=a.ridge,
+              line=not a.no_outline)
+    flat = render.turntable(model.occ, model.rgb, bands, a.dirs, **kw)
+    litf = render.turntable(model.occ, model.rgb, bands, a.dirs, lit=True, **kw)
     for frames, tag in ((flat, ""), (litf, "_lit")):
         render.sheet(frames, cols=min(8, a.dirs)).save(P(f"turntable_{a.dirs}{tag}.png"))
         render.save_gif(frames, P(f"turntable{tag}.gif"))
-    # rows: flat / lit (raw 26-neighbour normals) / lit (smoothed normals), 4 directions
     picks = [0, a.dirs // 8, a.dirs // 4, a.dirs // 2]
-    render.sheet([fr[i] for fr in (flat, lit26, litf) for i in picks], cols=4).save(
+    render.sheet([fr[i] for fr in (flat, litf) for i in picks], cols=4).save(
         P("compare_flat_vs_lit.png"))
 
-    report = {"voxels": int(occ.sum()), **model.meta, "slices_roundtrip_identical": bool(same)}
+    report = {"voxels": int(model.occ.sum()), "layers": st.L,
+              "layer_thickness": [int(t) for t in st.thick], **model.meta,
+              "slices_roundtrip_identical": bool(same)}
     if not a.no_mesh:
-        quads = mesh.greedy_quads(occ, rgb)
-        mesh.write_obj(quads, P("model.obj"), occ.shape)
+        # mesh the layer stack itself (each layer extruded over its thickness)
+        quads = mesh.greedy_quads(st.occ, st.rgb)
         area = sum(q[3] for q in quads)
-        exp = mesh.exposed_face_count(occ)
-        print(f"mesh: {len(quads)} quads, face area {area} vs exposed voxel faces {exp} "
+        exp = mesh.exposed_face_count(st.occ)
+        heights = list(st.bottom) + [st.top]
+        quads = mesh.map_heights(quads, heights)
+        mesh.write_obj(quads, P("model.obj"), st.occ.shape)
+        print(f"mesh: {len(quads)} quads, face count {area} vs exposed layer faces {exp} "
               f"-> {'OK' if area == exp else 'MISMATCH'}")
-        report.update(mesh_quads=len(quads), mesh_area=area, exposed_faces=exp)
-        size = flat[0].size
+        report.update(mesh_quads=len(quads), mesh_faces=area, exposed_faces=exp)
+        X, _, Z = st.occ.shape
         row = []
         for i in picks:
-            row += [flat[i], mesh.render_quads(quads, occ.shape, 360 * i / a.dirs, size=size, **kw)]
+            row += [flat[i], mesh.render_quads(quads, X, Z, st.top, 360 * i / a.dirs,
+                                               scale=a.scale, squash=a.squash, pixel=not a.smooth)]
         render.sheet(row, cols=2).save(P("compare_stack_vs_mesh.png"))
     with open(P("report.json"), "w") as fh:
         json.dump(report, fh, indent=2)

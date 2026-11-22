@@ -4,8 +4,15 @@
 スライス帯・ターンテーブル・.obj はすべて同じボクセル配列から出力されます。
 
 ```
-python3 -m tools.sprite_stack --input input/views.png --layers 32 --out output --part warm
+# 目標の見た目(胴体9段の太い段 + 細かい葉、ドット絵描画)
+python3 -m tools.sprite_stack --input input/views_pixel.png --part warm --remove-part --round 2.5 --out output/pixel_input/no_bread
 ```
+
+- `--res`: ボクセルの高さ(形の解像度、既定 64)
+- `--layers`: 胴体の段数(既定 9)。各段は厚み(数ボクセル)を持つ1枚のスライスになる
+- `--top-layers`: 葉などの付属物の層数(既定 0 = 1ボクセルごと、薄い葉が崩れない)
+- `--ridge`: 段の境目の溝と上端のハイライトの強さ / `--no-outline` / `--smooth`(ドット絵描画をやめる)
+- `--grid auto`: 4つの図をシート上の位置から自動で見つける(1列・2×2・上1+下3などに対応)
 
 依存: Python 3, Pillow, NumPy, SciPy (`pip install pillow numpy scipy`)
 
@@ -25,13 +32,20 @@ python3 -m tools.sprite_stack --input input/views.png --layers 32 --out output -
 6. **任意**: `--round 2.5` で各層を超楕円に丸めます。`--colors N` で減色します。
 7. **出力**
    - `slices.png`: 横一列のスライス帯。左が地面側。各層は上から見た図で、キャラの正面が下端です。`slices_x8.png` は拡大版です。
-   - `slices.json`: スライス帯のメタ情報
+   - `slices.json`: スライス帯のメタ情報(`layer_bottom` / `layer_thickness`: 各層の下端と厚み)
    - `turntable_16.png` / `turntable.gif`: ライティングなし
    - `turntable_16_lit.png` / `turntable_lit.gif`: 法線ライティングと Voxel AO あり
    - `compare_flat_vs_lit.png`: 上から、ライティングなし / 26近傍の法線そのまま / ぼかした法線
    - `model.obj`: Greedy Meshing、頂点カラー付き(`v x y z r g b`)
    - `compare_stack_vs_mesh.png`: スタック描画と .obj 描画を並べたもの
    - `report.json`: スライス帯を読み戻した結果がボクセルと一致するか、メッシュの面積が露出面の数と一致するかの自己チェック
+
+## 段(厚い層)の作り方
+
+胴体は `--layers` 個の帯に分け、各帯の中央の断面を形にします。外周の色は帯の高さ全体の
+表面色を投影し、帯の代表色から大きく外れる色(目・頬・線画)を優先するので、段の間に
+細かい部分が埋もれません。描画では各層を厚み分だけ1pxずつ重ね、最下段を暗く(段の溝)、
+最上段を明るく(縁のハイライト)します。.obj も各層を厚み分押し出した同じ段の形です。
 
 ## パンなし版とブラウザビューア
 

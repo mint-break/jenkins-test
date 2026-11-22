@@ -83,13 +83,23 @@ def exposed_face_count(occ: np.ndarray) -> int:
     return int(sum((p & ~np.roll(p, sh, ax)).sum() for ax in range(3) for sh in (1, -1)))
 
 
-def render_quads(quads, shape, yaw_deg, scale=4, squash=0.6, step=1.0, size=None,
-                 light=False) -> Image.Image:
-    """Same projection as render.render_stack, but drawing the mesh polygons."""
-    X, Y, Z = shape
-    diag = math.ceil(math.hypot(X, Z) * scale) + 4
-    if size is None:
-        size = (diag + 8, int(diag * squash + Y * step * scale) + 16)
+def map_heights(quads, heights):
+    """Turn layer-index y coordinates into heights (layer boundaries in voxels)."""
+    h = np.asarray(heights, float)
+    out = []
+    for corners, n, col, area in quads:
+        c = corners.copy()
+        c[:, 1] = h[c[:, 1].astype(int)]
+        out.append((c, n, col, area))
+    return out
+
+
+def render_quads(quads, X, Z, H, yaw_deg, scale=4, squash=0.6, pixel=True) -> Image.Image:
+    """Same projection and canvas as render.render_stack, drawing mesh polygons."""
+    from .render import outline
+    s = 1 if pixel else scale
+    diag = math.ceil(math.hypot(X, Z) * s) + 4
+    size = (diag + 8, int(diag * squash + H * s) + 16)
     base_x = size[0] / 2
     base_y = size[1] - 8 - diag * squash / 2
     t = math.radians(yaw_deg)
@@ -99,23 +109,22 @@ def render_quads(quads, shape, yaw_deg, scale=4, squash=0.6, step=1.0, size=None
     def proj(p):
         u, v = p[..., 0] - X / 2, Z / 2 - p[..., 2]
         ur, vr = u * ct + v * st, -u * st + v * ct
-        sx = base_x + ur * scale
-        sy = base_y + vr * squash * scale - p[..., 1] * step * scale
-        depth = vr * ce + p[..., 1] * squash
-        return sx, sy, depth
+        sx = base_x + ur * s
+        sy = base_y + vr * squash * s - p[..., 1] * s
+        return sx, sy, vr * ce + p[..., 1] * squash
 
     img = Image.new("RGBA", size, (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     items = []
     for corners, n, col, _ in quads:
-        # back-face culling in view space
-        nu, nv = n[0], -n[2]
-        vrn = -nu * st + nv * ct
-        view_dot = vrn * ce + n[1] * squash
-        if view_dot <= 0:
+        vrn = -n[0] * st + (-n[2]) * ct
+        if vrn * ce + n[1] * squash <= 0:   # back-face culling
             continue
         sx, sy, dep = proj(corners)
         items.append((dep.mean(), list(zip(sx, sy)), col))
     for _, pts, col in sorted(items, key=lambda it: it[0]):
-        d.polygon(pts, fill=tuple(col) + (255,))
+        d.polygon(pts, fill=tuple(int(v) for v in col) + (255,))
+    img = outline(img)
+    if pixel and scale > 1:
+        img = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
     return img
