@@ -33,6 +33,8 @@ Shader "SpriteStack/Lit"
         _GlossMinHeight ("Gloss min height", Range(0, 1)) = 0.55
         _GlossFullHeight ("Gloss full height", Range(0, 1)) = 0.65
         _RimStrength ("Rim darkening", Range(0, 1)) = 0.10
+        [Toggle] _TwoSided ("Two-sided (thin parts: leaves)", Float) = 0
+        _GlossScale ("Gloss scale (per part)", Range(0, 1)) = 1
     }
 
     SubShader
@@ -58,6 +60,7 @@ Shader "SpriteStack/Lit"
             float _Squash, _Yaw, _Height01;
             float _BaseFrom, _BaseTo, _LightFrom, _LightTo;
             float _GlossFrom, _GlossTo, _GlossStrength, _GlossMinHeight, _GlossFullHeight, _RimStrength;
+            float _TwoSided, _GlossScale;
 
             struct appdata { float4 vertex : POSITION; float2 uv : TEXCOORD0; fixed4 color : COLOR; };
             struct v2f { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; fixed4 color : COLOR; };
@@ -76,13 +79,14 @@ Shader "SpriteStack/Lit"
                 float3 L = normalize(_LightDir.xyz);
                 float pitch = asin(saturate(_Squash));
                 float3 V = float3(0, -cos(pitch), sin(pitch));
+                if (_TwoSided > 0.5 && dot(n, V) < 0) n = -n;     // light thin parts from the visible side
                 float d = dot(n, L);
                 float3 col = lerp(_ShadowColor.rgb, _BaseColor.rgb, smoothstep(_BaseFrom, _BaseTo, d));
                 col = lerp(col, _LightColor.rgb, smoothstep(_LightFrom, _LightTo, d));
                 float3 H = normalize(L + V);
                 float g = smoothstep(_GlossFrom, _GlossTo, dot(n, H))
                         * smoothstep(_GlossMinHeight, _GlossFullHeight, _Height01);
-                col = lerp(col, _GlossColor.rgb, _GlossStrength * g);
+                col = lerp(col, _GlossColor.rgb, _GlossStrength * _GlossScale * g);
                 float rim = smoothstep(0.35, 0.0, saturate(dot(n, V)));
                 col *= 1.0 - _RimStrength * rim;
                 return col / max(_BaseColor.rgb, 1e-3);      // multiplier relative to the base colour

@@ -384,7 +384,7 @@
   },
   "unity": {
     "shader": "Unity/SpriteStackLit.shader",
-    "builder": "Unity/SpriteStackBody.cs",
+    "builder": "Unity/SpriteStackCharacter.cs",
     "readme": "Unity/README.md",
     "pipeline": "Built-in (Unity 2020.3)",
     "status": "not compiled in Unity yet (no editor in the build environment)"

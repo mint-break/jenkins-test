@@ -36,12 +36,16 @@ def view_dir(squash):
     return np.array([0.0, -math.cos(pitch), math.sin(pitch)])
 
 
-def shade(n, h01, pal, squash, P=PARAMS):
+def shade(n, h01, pal, squash, P=PARAMS, two_sided=None, gloss_scale=1.0):
     """n: (...,3) normals in the lighting space. Returns tone colour (...,3) 0..255,
-    expressed relative to the palette 'base' so albedo variations survive."""
+    expressed relative to the palette 'base' so albedo variations survive.
+    two_sided: mask of thin surfaces (leaves) lit from the side facing the viewer."""
     L = np.asarray(P["light_dir"], float)
     L /= np.linalg.norm(L)
     V = view_dir(squash)
+    if two_sided is not None:
+        flip = two_sided & ((n @ V) < 0)
+        n = np.where(flip[..., None], -n, n)
     d = n @ L
     sh, ba, li, gl = (np.asarray(pal[k], np.float32) for k in ("shadow", "base", "light", "gloss"))
     col = sh + (ba - sh) * _ss(P["base_from"], P["base_to"], d)[..., None]
@@ -49,7 +53,7 @@ def shade(n, h01, pal, squash, P=PARAMS):
     Hv = L + V
     Hv /= np.linalg.norm(Hv)
     g = _ss(P["gloss_from"], P["gloss_to"], n @ Hv) * _ss(P["gloss_min_height"], P["gloss_full_height"], h01)
-    col = col + (gl - col) * (P["gloss_strength"] * g)[..., None]
+    col = col + (gl - col) * (P["gloss_strength"] * gloss_scale * g)[..., None]
     rim = _ss(0.35, 0.0, np.clip(n @ V, 0, 1))
     col = col * (1 - P["rim_strength"] * rim)[..., None]
     return col / np.maximum(ba, 1)      # tone multiplier per channel
@@ -61,7 +65,9 @@ def _rot(img2d, yaw):
 
 
 def lit_frame(albedo, normals, spacing, yaw, pal, squash=0.75, out_scale=0.5,
-              outline=(38, 107, 81), outline_px=2, heights01=None):
+              outline=(38, 107, 81), outline_px=2, heights01=None, two_sided=None, gloss=None):
+    """two_sided: per-layer bool masks (thin surfaces, e.g. leaves) or None;
+    gloss: per-layer gloss multipliers or None."""
     n0 = albedo[0].shape[0]
     S = int(round(n0 * out_scale))
     sq = max(1, int(round(S * squash)))
@@ -88,7 +94,11 @@ def lit_frame(albedo, normals, spacing, yaw, pal, squash=0.75, out_scale=0.5,
         N = np.stack([nx, ny, nm[2]], -1)
         N /= np.linalg.norm(N, axis=-1, keepdims=True) + 1e-9
         h01 = heights01[i] if heights01 is not None else i / max(L - 1, 1)
-        tone = shade(N, h01, pal, squash)
+        ts = None
+        if two_sided is not None and two_sided[i] is not None and two_sided[i].any():
+            ts = _rot(small(two_sided[i].astype(np.float32)), yaw) > 0.5
+        tone = shade(N, h01, pal, squash, two_sided=ts,
+                     gloss_scale=1.0 if gloss is None else gloss[i])
         prem = np.stack(rgb, -1) * tone
         layer = np.concatenate([np.clip(prem, 0, 1), a[..., None]], -1)
         # squash vertically
