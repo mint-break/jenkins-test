@@ -1,0 +1,13 @@
+{
+  "voxels": 9753,
+  "X": 30,
+  "Y": 32,
+  "Z": 25,
+  "neck_y": 24,
+  "back_dx": 1,
+  "back_iou": 0.9339,
+  "slices_roundtrip_identical": true,
+  "mesh_quads": 2915,
+  "mesh_area": 3700,
+  "exposed_faces": 3700
+}
