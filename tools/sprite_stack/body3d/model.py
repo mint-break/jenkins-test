@@ -209,8 +209,8 @@ class _RoundTop:
 
 def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
           head_aspect: float = 1.0, smooth_px: float = 1.5, side_top_margin: float = 0.10,
-          base_round: float = 0.08, round_top: float = 0.0, width_top_margin: float = 0.10,
-          top_h: float = 0.0) -> BodyShape:
+          base_round: float = 0.08, round_top: float = 0.0, width_top_margin: float = 0.28,
+          top_h: float = 0.0, top_above_leaf: float = 0.04) -> BodyShape:
     Hs = side.notes["leaf_base_h"] - side.notes["body_bottom_h"]
     # width: four edges (front L/R, back L/R) -> one symmetric profile
     hW = np.concatenate([front.h, front.h, back.h, back.h])
@@ -248,6 +248,8 @@ def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
     top = hi_w_ - q * head_aspect * R + head_aspect * R
     if top_h > 0:                       # fixed crown height: the caps bend gently over [hi, top]
         top = float(top_h)
+    elif top_above_leaf > 0:            # crown just above the leaf base (relative to body height)
+        top = front.notes["leaf_base_h"] + top_above_leaf * Hf
     top = max(top, hi_w_ + 4, hi_d + 4)   # never cut the measured outline
 
     w = Profile1D(sw, lo, hi_w_, bottom, top).close()
@@ -267,15 +269,16 @@ def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
         "back_front_depth_ratio_at_tail": ratio,
     }
     shape.estimated = [
-        f"head top: width measured up to h={hi_w_:.0f}px, depth up to h={hi_d:.0f}px "
-        f"(the leaf overlaps the back of the head in the side view); slope-matched ellipse caps "
-        f"close at h={top:.0f}px",
+        f"head top (gentle crown): width measured up to h={hi_w_:.0f}px, depth up to h={hi_d:.0f}px "
+        f"(the leaf overlaps the back of the head in the side view); above that, slope-matched "
+        f"ellipses rise gently to a broad crown at h={top:.0f}px",
         f"body bottom: rounded from h={lo:.0f}px down to h={bottom:.0f}px (feet cover it; the end "
         "height is the body's lower outline seen between the feet)",
         "sides behind the arms: spline bridged between the measured rows above and below the arms",
         f"back behind the tail: front edge x {ratio:.2f} (back/front ratio just above the tail)",
-        f"head top roundness: above h={hi_d:.0f}px the width narrows towards the side-view depth "
-        f"({round_top * 100:.0f}% at the top) so the crown is a round dome; dome aspect {head_aspect}",
         "left/right symmetry: front and back edges on both sides averaged into one width",
     ]
+    if round_top > 0:
+        shape.estimated.append(f"crown width narrowed towards the side-view depth above h={hi_d:.0f}px "
+                               f"({round_top * 100:.0f}% at the top)")
     return shape
