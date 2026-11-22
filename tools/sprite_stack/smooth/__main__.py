@@ -13,41 +13,56 @@ from PIL import Image
 
 from ..views import load_views, segment_part
 from .body import Body, BodyParams, estimate_exponent, sample_palette
-from .profile import estimate
+from .profile import estimate, estimate_v2, top_exponent
 from . import render
 
 
 def compare_with_art(views, prof, body, path):
-    """Draw the body's estimated outline (red) over the back / side / front art."""
+    """Estimated body outline (red) over the front / side / back / top art."""
     from PIL import ImageDraw
-    from .profile import edges
-    eF = edges(views["front"])
+    from .profile import _half_extent
+    Hb = prof.raw["width"][2]
     tiles = []
     for name, (a_, b_) in (("front", ("left", "right")), ("side", ("front", "back")),
                            ("back", ("right", "left"))):
         v = views[name]
-        e = edges(v)
-        k = (eF.bottom - eF.top) / max(e.bottom - e.top, 1)
+        _, _, _, _, _, axis, H = _half_extent(v)
+        bottom = np.flatnonzero(v.mask.any(1))[-1]
+        k = H / Hb                                       # view px per profile px
         im = Image.fromarray(v.rgb.astype(np.uint8))
         d = ImageDraw.Draw(im)
-        hs = np.linspace(0, 1, 400)
-        ys = e.bottom - hs * prof.height / k
-        # axis: centre of the estimated outline at mid body height, matched to the art
-        r_mid = int(e.bottom - 0.45 * prof.height / k)
-        ra, rb = body.r[a_](0.45) / k, body.r[b_](0.45) / k
-        c = (np.nanmean(e.left[r_mid - 2:r_mid + 3]) + ra + np.nanmean(e.right[r_mid - 2:r_mid + 3]) - rb) / 2
-        if name == "front":   # bread/arm cover the right edge here: use the left edge only
-            c = np.nanmean(e.left[r_mid - 2:r_mid + 3]) + ra
-        d.line([(c - body.r[a_](h) / k, y) for h, y in zip(hs, ys)], fill=(230, 40, 40), width=3)
-        d.line([(c + body.r[b_](h) / k, y) for h, y in zip(hs, ys)], fill=(230, 40, 40), width=3)
+        hs = np.linspace(0, 1, 500)
+        ys = bottom - hs * prof.height * k
+        d.line([(axis - body.r[a_](h) * k, y) for h, y in zip(hs, ys)], fill=(230, 40, 40), width=3)
+        d.line([(axis + body.r[b_](h) * k, y) for h, y in zip(hs, ys)], fill=(230, 40, 40), width=3)
         tiles.append(im)
-    W = sum(t.width for t in tiles)
-    H = max(t.height for t in tiles)
-    out = Image.new("RGB", (W, H))
+    # top view: widest cross-section
+    v = views["top"]
+    im = Image.fromarray(v.rgb.astype(np.uint8))
+    d = ImageDraw.Draw(im)
+    ys_, xs_ = np.nonzero(v.mask)
+    cy = (ys_.min() + ys_.max()) / 2
+    cx = (xs_.min() + xs_.max()) / 2
+    k = v.w / max(v.w, 1)
+    hs = np.linspace(0, 0.6, 60)
+    hw = hs[np.argmax([body.r["left"](h) for h in hs])]
+    kx = (cy - ys_.min()) / max(body.r["back"](hw), 1)   # top view scale from the clean back side
+    pts = []
+    for t in np.linspace(0, 2 * np.pi, 360):
+        c, s_ = np.cos(t), np.sin(t)
+        rx = body.r["right"](hw) if c >= 0 else body.r["left"](hw)
+        rz = body.r["front"](hw) if s_ >= 0 else body.r["back"](hw)
+        rr = 1 / ((abs(c) / rx) ** body.prm.p + (abs(s_) / rz) ** body.prm.p) ** (1 / body.prm.p)
+        pts.append((cx + rr * c * kx, cy + rr * s_ * kx))
+    d.line(pts + [pts[0]], fill=(230, 40, 40), width=3)
+    tiles.append(im)
+    W = sum(t.width for t in tiles) + 10 * len(tiles)
+    Hh = max(t.height for t in tiles)
+    out = Image.new("RGB", (W, Hh))
     x = 0
     for t in tiles:
-        out.paste(t, (x, H - t.height))
-        x += t.width
+        out.paste(t, (x, Hh - t.height))
+        x += t.width + 10
     out.save(path)
 
 
@@ -66,8 +81,8 @@ def main(argv=None):
         os.makedirs(os.path.join(a.out, d), exist_ok=True)
     views = load_views(a.input)
     segment_part(views, "warm")
-    prof = estimate(views)
-    p = a.p or estimate_exponent(views["top"])
+    prof = estimate_v2(views)
+    p = a.p or top_exponent(views["top"])
     prm = BodyParams(layers=a.layers, size=a.size, body_width_px=a.body_width, p=p)
     body = Body(prof, prm)
     pal = sample_palette(views)
@@ -116,8 +131,7 @@ def main(argv=None):
         "shading": {"palette": {k: [round(c) for c in v] for k, v in pal.items()},
                     "light_model_space": prm.light, "style": "soft cel, baked"},
         "estimated": prof.estimated + [
-            f"cross-section exponent p={p:.2f} from the top view outline area ratio",
-            "ground edge rounding and the flare below the widest point are assumed",
+            f"cross-section roundness p={p:.2f}: superellipse through the top view's back-diagonal radius",
         ],
     }
     with open(os.path.join(a.out, "Config", "stack_config.json"), "w") as fh:

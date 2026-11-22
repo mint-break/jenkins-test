@@ -73,7 +73,10 @@ class Body:
         self.prm = prm
         self.prof = prof
         hr = prm.base_round
-        self.r = {k: flare_bottom(getattr(prof, k), hr) for k in ("left", "right", "front", "back")}
+        if getattr(prof, "shaped", False):     # v2 profile already shapes the bottom
+            self.r = {k: getattr(prof, k) for k in ("left", "right", "front", "back")}
+        else:
+            self.r = {k: flare_bottom(getattr(prof, k), hr) for k in ("left", "right", "front", "back")}
         widest = max(float(np.max(self.r["left"](np.linspace(0, 1, 400)) + self.r["right"](np.linspace(0, 1, 400)))),
                      float(np.max(self.r["front"](np.linspace(0, 1, 400)) + self.r["back"](np.linspace(0, 1, 400)))))
         self.scale = prm.body_width_px / widest          # canvas px per front-view px
@@ -142,6 +145,7 @@ def shade(n, h, pal, prm: BodyParams):
     G = np.array(prm.gloss_dir, np.float32)
     G /= np.linalg.norm(G)
     g = smoothstep(0.90, 0.965, n @ G)[..., None]
+    g = g * smoothstep(0.58, 0.68, np.float32(h))          # the glint sits on the head only
     col = col + (np.array(pal["gloss"], np.float32) - col) * g * 0.7
     # contact shadow near the ground
     ao = 1 - 0.18 * (1 - smoothstep(0.0, 0.12, np.float32(h)))
