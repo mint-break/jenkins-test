@@ -1,0 +1,62 @@
+{
+  "step": "1-3 (3D shape only, no sprite stack yet)",
+  "mesh": {
+    "vertices": 34882,
+    "faces": 69760
+  },
+  "body_height_px": 339.6107743762731,
+  "bottom_px": 18.0,
+  "top_px": 357.6107743762731,
+  "max_half_width_px": 158.15305554947741,
+  "max_half_depth_front_px": 135.14715578715243,
+  "max_half_depth_back_px": 139.0290575121413,
+  "superellipse_p": 2.175,
+  "measured": {
+    "front": {
+      "leaf_base_h": 337.0,
+      "body_bottom_h": 18.0,
+      "arms_h": [
+        89.0,
+        222.0
+      ],
+      "feet_from_h": 49.0
+    },
+    "back": {
+      "leaf_base_h": 334.0,
+      "body_bottom_h": 18.0,
+      "arms_h": [
+        102.0,
+        228.0
+      ],
+      "feet_from_h": 49.0
+    },
+    "side": {
+      "leaf_base_h": 338.0,
+      "body_bottom_h": 3.0,
+      "tail_from_h": 115.0,
+      "feet_from_h": 36.0
+    },
+    "width_rows_measured": 612,
+    "depth_rows_measured": [
+      268,
+      189
+    ],
+    "width_measured_h": [
+      77.8,
+      333.0
+    ],
+    "depth_measured_h": [
+      77.8,
+      304.0
+    ],
+    "back_front_depth_ratio_at_tail": 1.0298511618840762
+  },
+  "estimated": [
+    "head top: width measured up to h=333px (leaf base), depth up to h=304px (the leaf overlaps the back of the head in the side view); slope-matched ellipse caps close at h=358px",
+    "body bottom: rounded from h=78px down to h=18px (feet cover it; the end height is the body's lower outline seen between the feet)",
+    "sides behind the arms: spline bridged between the measured rows above and below the arms",
+    "back behind the tail: front edge x 1.03 (back/front ratio just above the tail)",
+    "left/right symmetry: front and back edges on both sides averaged into one width",
+    "cross-section roundness p=2.17: fitted to the top view's back half (+-60 deg, rms 6.8px); width/depth come from the other 3 views"
+  ]
+}

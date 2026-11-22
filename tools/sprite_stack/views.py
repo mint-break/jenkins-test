@@ -88,6 +88,18 @@ def load_views(path: str, grid: str = "auto", order: str = ",".join(VIEW_NAMES),
     return views
 
 
+def fg_mask(img: np.ndarray, bg_threshold: float = 40) -> np.ndarray:
+    """Foreground = alpha, or colour distance from the sheet's border colour
+    (works for black and white backgrounds alike)."""
+    if img.shape[2] == 4 and img[..., 3].min() < 250:
+        return img[..., 3] > 127
+    rgb = img[..., :3]
+    border = np.concatenate([rgb[:4].reshape(-1, 3), rgb[-4:].reshape(-1, 3),
+                             rgb[:, :4].reshape(-1, 3), rgb[:, -4:].reshape(-1, 3)])
+    bg = np.median(border, 0)
+    return np.linalg.norm(rgb - bg, axis=-1) > bg_threshold
+
+
 def _load_blobs(img, names, bg_threshold, keep_ratio):
     """Find the 4 views as the 4 largest separate blobs, whatever the layout.
 
@@ -95,10 +107,7 @@ def _load_blobs(img, names, bg_threshold, keep_ratio):
     Captions are smaller blobs and are ignored. Returns None if the sheet does
     not split into exactly 4 large blobs.
     """
-    if img[..., 3].min() < 250:
-        mask = img[..., 3] > 127
-    else:
-        mask = img[..., :3].max(-1) > bg_threshold
+    mask = fg_mask(img, bg_threshold)
     # bridge 1-2 px gaps inside a view (thin outlines) but not the space between views
     closed = nd.binary_closing(mask, iterations=3)
     lab, n = nd.label(closed)
@@ -130,6 +139,11 @@ def _load_blobs(img, names, bg_threshold, keep_ratio):
     views = {}
     for name, (_, _, k, sl) in zip(names, ordered):
         m = (lab[sl] == k) & mask[sl]
+        # drop captions that the closing glued onto the view
+        cl, cn = nd.label(m)
+        if cn > 1:
+            cs = nd.sum(m, cl, range(1, cn + 1))
+            m = np.isin(cl, np.flatnonzero(cs >= cs.max() * keep_ratio) + 1)
         m = nd.binary_fill_holes(m)
         ys, xs = np.nonzero(m)
         sub = (slice(ys.min(), ys.max() + 1), slice(xs.min(), xs.max() + 1))
