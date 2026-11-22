@@ -22,7 +22,7 @@ been compiled or run in Unity yet. The lighting maths is the same as
 5. Add `SpriteStackCharacter` to an empty GameObject and add one Part per folder:
    - Body: 64 Albedo sprites + 64 Normal textures, layerIndex 0..63, rank 0, twoSided off, glossScale 1
    - Leaves: the sprites/normals of `Leaves/`, layerIndex from `Leaves/stack_config.json`
-     (`layer_index`, currently 61..85), rank 1, **twoSided on**, glossScale 0.35
+     (`layer_index`, currently 61..84), rank 1, **twoSided on**, glossScale 0.35
    Set the material, `layerSpacingPx` (`character_config.json` → `layer_spacing_px`) and the
    same Pixels Per Unit. `character_config.json` → `draw` lists the resulting order.
 6. Turn the character by changing `yaw` (degrees). The light stays at the screen's upper left.

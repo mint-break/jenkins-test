@@ -18,7 +18,7 @@
     "stack_up": "+Y"
   },
   "layer_spacing_px": 6.2204999999999995,
-  "grid_layers": 86,
+  "grid_layers": 85,
   "height01_divisor": 64,
   "parts": {
     "Body": {
@@ -830,15 +830,6 @@
       "baked": "Leaves/Layer_084.png",
       "draw_order": 87,
       "height_px": 522.522
-    },
-    {
-      "part": "Leaves",
-      "index": 85,
-      "albedo": "Leaves/Albedo/Layer_085.png",
-      "normal": "Leaves/Normal/Layer_085.png",
-      "baked": "Leaves/Layer_085.png",
-      "draw_order": 88,
-      "height_px": 528.7425
     }
   ],
   "lighting": {

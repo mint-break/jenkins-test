@@ -111,8 +111,7 @@ def export_leaves(out_dir, params: leaves.LeafParams | None = None, views=None):
             "true width 113 px solved from the front + side apparent widths",
             "bend, cupping, thickness (plush leaf), serration and vein pattern are drawn to "
             "match the art's style, not measured",
-            "stems: the leaf base sits ~10 px above the body's crown (the gentle crown rises above "
-            "the art's leaf base), so a short stem shows; its lower end is inside the head",
+            "stem: one shared stem on the axis, ~5 px above the crown; both blades start at its top (lower end inside the head)",
         ],
     }
     with open(os.path.join(d, "stack_config.json"), "w") as fh:

@@ -32,8 +32,8 @@ from scipy import ndimage as nd
 
 @dataclass
 class LeafParams:
-    base: tuple = (5.0, 360.0, 4.0)        # right leaf (mirrored for the left): just above the crown
-                                           # (349.8), so a short stem shows; the stem runs down into the head
+    base: tuple = (1.5, 355.0, 3.0)        # right leaf (mirrored for the left): both blades start at
+                                           # the top of ONE shared stem, ~5 px above the crown (349.8)
     tip: tuple = (150.0, 436.0, 108.0)
     width: float = 113.0                   # true max width (sheet px)
     roll_deg: float = 80.0
@@ -45,7 +45,7 @@ class LeafParams:
     # width profile along the midrib (u = 0 base .. 1 tip), from the front view
     profile_u: tuple = (0.0, 0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 1.0)
     profile_w: tuple = (0.0, 8, 44, 68, 85, 100, 99, 95, 80, 60, 30, 0.0)
-    stem_len: float = 24.0
+    stem_len: float = 16.0               # shared vertical stem; lower end inside the head
     stem_radius: float = 4.5
     colours: dict = field(default_factory=lambda: {
         "base": (127, 224, 169), "light": (147, 232, 182), "vein": (80, 180, 132),
@@ -110,20 +110,6 @@ def sample(p: LeafParams, side: int = +1, nu=900, ns=360):
     pos = np.concatenate(out_pos)
     nrm = np.concatenate(out_nrm)
     colr = np.concatenate(out_col)
-    # stem: short cylinder from below the base up to it
-    t = np.linspace(-1, 0, 40)
-    a = np.linspace(0, 2 * math.pi, 48, endpoint=False)
-    T_, A_ = np.meshgrid(t, a, indexing="ij")
-    axis = d * 0.6 + np.array([0, 1.0, 0]) * 0.4
-    axis /= np.linalg.norm(axis)
-    q1 = np.cross(axis, [0, 0, 1.0])
-    q1 /= np.linalg.norm(q1)
-    q2 = np.cross(axis, q1)
-    rad = np.cos(A_)[..., None] * q1 + np.sin(A_)[..., None] * q2
-    sp = B + (T_ * p.stem_len)[..., None] * axis + p.stem_radius * rad
-    pos = np.concatenate([pos, sp.reshape(-1, 3)])
-    nrm = np.concatenate([nrm, rad.reshape(-1, 3)])
-    colr = np.concatenate([colr, np.tile(np.array(p.colours["stem"], float), (sp.size // 3, 1))])
     if side < 0:
         pos = pos * np.array([-1, 1, 1])
         nrm = nrm * np.array([-1, 1, 1])
@@ -151,10 +137,32 @@ def _albedo(p: LeafParams, U, S):
     return col
 
 
+def stem(p: LeafParams):
+    """One shared stem on the body axis, from inside the head up to where the two
+    blades start (no fork: both leaves grow from its rounded top)."""
+    top = np.array([0.0, p.base[1], p.base[2]])
+    t = np.linspace(-1, 0, 50)
+    a = np.linspace(0, 2 * math.pi, 64, endpoint=False)
+    T_, A_ = np.meshgrid(t, a, indexing="ij")
+    rad = np.stack([np.cos(A_), np.zeros_like(A_), np.sin(A_)], -1)
+    pos = top + (T_ * p.stem_len)[..., None] * np.array([0, 1.0, 0]) + p.stem_radius * rad
+    nrm = rad.reshape(-1, 3)
+    pos = pos.reshape(-1, 3)
+    # rounded cap
+    th = np.linspace(0, math.pi / 2, 12)
+    TH, A2 = np.meshgrid(th, a, indexing="ij")
+    cap_n = np.stack([np.cos(TH) * np.cos(A2), np.sin(TH), np.cos(TH) * np.sin(A2)], -1).reshape(-1, 3)
+    pos = np.concatenate([pos, top + p.stem_radius * cap_n])
+    nrm = np.concatenate([nrm, cap_n])
+    col = np.tile(np.array(p.colours["stem"], float), (len(pos), 1))
+    return {"pos": pos, "nrm": nrm, "col": col}
+
+
 def all_points(p: LeafParams):
     a = sample(p, +1)
     b = sample(p, -1)
-    return {k: np.concatenate([a[k], b[k]]) for k in a}
+    c = stem(p)
+    return {k: np.concatenate([a[k], b[k], c[k]]) for k in a}
 
 
 def slice_layers(pts, heights, spacing_sheet, scale=1.2, size=512, ss=2):
