@@ -209,7 +209,8 @@ class _RoundTop:
 
 def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
           head_aspect: float = 1.0, smooth_px: float = 1.5, side_top_margin: float = 0.10,
-          base_round: float = 0.08, round_top: float = 0.0, width_top_margin: float = 0.10) -> BodyShape:
+          base_round: float = 0.08, round_top: float = 0.0, width_top_margin: float = 0.10,
+          top_h: float = 0.0) -> BodyShape:
     Hs = side.notes["leaf_base_h"] - side.notes["body_bottom_h"]
     # width: four edges (front L/R, back L/R) -> one symmetric profile
     hW = np.concatenate([front.h, front.h, back.h, back.h])
@@ -245,6 +246,9 @@ def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
     q = t / math.sqrt(1 + t * t)
     R = r_m / math.sqrt(1 - q * q)
     top = hi_w_ - q * head_aspect * R + head_aspect * R
+    if top_h > 0:                       # fixed crown height: the caps bend gently over [hi, top]
+        top = float(top_h)
+    top = max(top, hi_w_ + 4, hi_d + 4)   # never cut the measured outline
 
     w = Profile1D(sw, lo, hi_w_, bottom, top).close()
     df = Profile1D(sf, lo, hi_d, bottom, top).close()

@@ -25,6 +25,8 @@ def main(argv=None):
                     help="head dome: 1 = round, smaller = flatter")
     ap.add_argument("--round-top", type=float, default=0.0,
                     help="0..1: narrow the crown width towards the depth (0 = off)")
+    ap.add_argument("--top-h", type=float, default=0.0,
+                    help="fixed crown height above the ground in sheet px (0 = from the dome aspect)")
     ap.add_argument("--width-top-margin", type=float, default=0.10,
                     help="stop measuring the width this far (fraction of height) below the leaf base")
     a = ap.parse_args(argv)
@@ -39,7 +41,7 @@ def main(argv=None):
     mS = analyze.measure(views["side"], "side")
     # STEP 2 (shape first with a provisional roundness, then fit it to the top view)
     shape = model.build(mF, mB, mS, 2.0, head_aspect=a.head_aspect, round_top=a.round_top,
-                        width_top_margin=a.width_top_margin)
+                        width_top_margin=a.width_top_margin, top_h=a.top_h)
     hs = np.linspace(shape.bottom, shape.top, 500)
     hw = hs[int(np.argmax(shape.w(hs)))]
     p, p_err, _ = analyze.top_view_exponent(views["top"], float(shape.w(hw)), float(shape.db(hw)))
