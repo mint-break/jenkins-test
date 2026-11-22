@@ -33,6 +33,12 @@ python3 -m tools.sprite_stack --input input/views.png --layers 32 --out output -
    - `compare_stack_vs_mesh.png`: スタック描画と .obj 描画を並べたもの
    - `report.json`: スライス帯を読み戻した結果がボクセルと一致するか、メッシュの面積が露出面の数と一致するかの自己チェック
 
+## パンなし版とブラウザビューア
+
+- `--part warm --remove-part`: パンを各ビューから消して胴体として作り直します(出力は `output/no_bread_32`, `output/no_bread_64`)。
+- `output/viewer.html`: スライス帯をそのまま重ねて回すブラウザ用ビューアです。`output/` で `python3 -m http.server` を起動して開きます。
+  自分のスライス帯を読み込んで確認することもできます。
+
 ## 座標と向きの約束
 
 - 正面図 = -Z 側から見た図、背面図 = +Z 側から見た図

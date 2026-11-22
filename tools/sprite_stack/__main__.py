@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image
 
 from . import mesh, render, slices
-from .views import load_views, resize_view, segment_part
+from .views import load_views, remove_part, resize_view, segment_part
 from .voxelize import build, quantize
 
 
@@ -53,6 +53,8 @@ def main(argv=None):
                     help="carve body layers to a superellipse with this exponent (0=off, 2=ellipse)")
     ap.add_argument("--part", default="none",
                     help="split a colour-separable part before carving: none | warm | numpy expr of r,g,b")
+    ap.add_argument("--remove-part", action="store_true",
+                    help="erase the --part object instead of carving it (e.g. no sandwich)")
     ap.add_argument("--colors", type=int, default=0, help="quantise voxel colours (0=off)")
     ap.add_argument("--dirs", type=int, default=16, help="turntable directions")
     ap.add_argument("--scale", type=int, default=4, help="preview pixel scale")
@@ -66,6 +68,8 @@ def main(argv=None):
     views = load_views(a.input, a.grid, a.order, a.bg_threshold)
     if a.part != "none":
         segment_part(views, a.part)
+        if a.remove_part:
+            remove_part(views)
     debug_views(views, P("debug_views.png"))
     model = build(views, a.layers, a.appendage, a.plate, a.round_exp)
     if a.colors:

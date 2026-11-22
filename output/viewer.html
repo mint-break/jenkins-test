@@ -1,0 +1,357 @@
+<meta charset="utf-8">
+<title>Mint Stack Viewer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one stage (canvas turntable) beside a narrow control rail; the slice strip runs underneath like a film strip. */
+:root {
+  --bg: #eef4f1;
+  --panel: #ffffff;
+  --fg: #1d2b25;
+  --muted: #5d7068;
+  --line: #d3e1db;
+  --accent: #2f8f6a;
+  --accent-soft: #d6efe4;
+  --stage: #dfe9e4;
+  --stage-grid: #cddcd5;
+  --hl: #e8553d;
+  --f-display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --f-body: "M PLUS Rounded 1c", "Hiragino Sans", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121a17; --panel: #1a2420; --fg: #e3efe9; --muted: #93a8a0; --line: #2a3832;
+    --accent: #6fd3a8; --accent-soft: #1f3a2f; --stage: #18221e; --stage-grid: #22302a; --hl: #ff7a5c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121a17; --panel: #1a2420; --fg: #e3efe9; --muted: #93a8a0; --line: #2a3832;
+  --accent: #6fd3a8; --accent-soft: #1f3a2f; --stage: #18221e; --stage-grid: #22302a; --hl: #ff7a5c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 32px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: 1.5rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage {
+  position: relative; border-radius: 14px; overflow: hidden; min-height: 420px;
+  background: var(--stage);
+  background-image: linear-gradient(var(--stage-grid) 1px, transparent 1px), linear-gradient(90deg, var(--stage-grid) 1px, transparent 1px);
+  background-size: 24px 24px; touch-action: none; cursor: grab;
+}
+.stage:active { cursor: grabbing; }
+canvas#view { display: block; width: 100%; height: 100%; image-rendering: pixelated; position: absolute; inset: 0; }
+.angle {
+  position: absolute; left: 12px; bottom: 10px; font-family: var(--f-mono); font-size: 12px;
+  color: var(--muted); font-variant-numeric: tabular-nums; pointer-events: none;
+}
+.hint { position: absolute; right: 12px; top: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.rail { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; align-content: start; }
+.field { display: grid; gap: 6px; }
+.field label, .lbl { font-size: 12px; color: var(--muted); letter-spacing: .04em; display: flex; justify-content: space-between; gap: 8px; }
+.field output { font-family: var(--f-mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.seg button { min-width: 0; overflow-wrap: anywhere; }
+.seg button, .btn {
+  font: inherit; font-size: 13px; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); cursor: pointer; text-align: left;
+}
+.seg button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); font-weight: 800; }
+.seg button small { display: block; color: var(--muted); font-weight: 500; font-family: var(--f-mono); font-size: 11px; }
+.checks { display: grid; gap: 8px; }
+.checks label { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+.checks input { accent-color: var(--accent); width: 16px; height: 16px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.strip { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.strip-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: baseline; }
+.strip-head h2 { font-family: var(--f-display); font-size: 1rem; margin: 0; }
+.strip-head p { margin: 0; color: var(--muted); font-size: 12px; font-family: var(--f-mono); }
+.strip-scroll { overflow-x: auto; padding-bottom: 6px; }
+canvas#strip { display: block; image-rendering: pixelated; cursor: pointer; }
+.file { font-size: 12px; color: var(--muted); display: grid; gap: 6px; }
+.file input[type=file] { font-size: 12px; max-width: 100%; }
+.file .row { display: flex; gap: 8px; align-items: center; }
+.file input[type=number] { width: 72px; font: inherit; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+.note { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.6; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Mint Stack Viewer</h1>
+    <p class="sub">ボクセルの断面から作ったスライス帯を、そのまま重ねて回します</p>
+  </header>
+
+  <div class="main">
+    <div class="stage" id="stage">
+      <canvas id="view" aria-label="スプライトスタックのプレビュー。ドラッグで回転"></canvas>
+      <div class="hint">ドラッグで回転 · ホイールで拡大</div>
+      <div class="angle" id="angle">0°</div>
+    </div>
+
+    <aside class="rail">
+      <div class="field">
+        <span class="lbl">モデル</span>
+        <div class="seg" id="models"></div>
+      </div>
+      <div class="field">
+        <label for="pitch">見下ろし（縦の潰し） <output id="pitchOut"></output></label>
+        <input type="range" id="pitch" min="0.2" max="1" step="0.01" value="0.6">
+      </div>
+      <div class="field">
+        <label for="step">層の間隔 <output id="stepOut"></output></label>
+        <input type="range" id="step" min="0.5" max="4" step="0.05" value="1">
+      </div>
+      <div class="field">
+        <label for="zoom">拡大 <output id="zoomOut"></output></label>
+        <input type="range" id="zoom" min="2" max="12" step="1" value="5">
+      </div>
+      <div class="field">
+        <label for="layer">強調する層 <output id="layerOut"></output></label>
+        <input type="range" id="layer" min="-1" max="63" step="1" value="-1">
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="spin" checked> 自動で回す</label>
+        <label><input type="checkbox" id="lit" checked> ライティング（法線＋AO）</label>
+        <label><input type="checkbox" id="fill" checked> 層の隙間を埋める</label>
+      </div>
+      <div class="file">
+        <span class="lbl">自分のスライス帯を読み込む</span>
+        <div class="row"><label for="nLayers">層数</label><input type="number" id="nLayers" min="1" max="512" value="32"></div>
+        <input type="file" id="upload" accept="image/png">
+      </div>
+      <p class="note">層を強調すると、その1枚だけ色が付きます。回してもその層が本体とずれずについてくれば、位置合わせは正しいです。</p>
+    </aside>
+  </div>
+
+  <section class="strip">
+    <div class="strip-head">
+      <h2>スライス帯</h2>
+      <p id="stripInfo"></p>
+    </div>
+    <div class="strip-scroll"><canvas id="strip" aria-label="スライス帯。クリックした層を強調"></canvas></div>
+  </section>
+</div>
+
+<script>
+const MODELS = [
+  { id: "nb64", name: "パンなし", sub: "64層・丸め", src: "no_bread_64/slices.png", layers: 64 },
+  { id: "nb32", name: "パンなし", sub: "32層", src: "no_bread_32/slices.png", layers: 32 },
+  { id: "b64", name: "パンあり", sub: "64層・丸め", src: "variants/round_64/slices.png", layers: 64 },
+  { id: "b32", name: "パンあり", sub: "32層", src: "slices.png", layers: 32 },
+];
+
+const $ = (id) => document.getElementById(id);
+const view = $("view"), ctx = view.getContext("2d");
+const stripCv = $("strip"), sctx = stripCv.getContext("2d");
+const state = { yaw: 0, model: null, spin: true, dragging: false, lastX: 0, lastT: 0, dirty: true };
+
+/* ---------- model: strip -> voxel arrays (same convention as tools/sprite_stack) ---------- */
+function buildModel(img, layers, label) {
+  const W = Math.floor(img.width / layers), Z = img.height, Y = layers;
+  const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+  const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+  const px = g.getImageData(0, 0, img.width, img.height).data;
+  const N = W * Y * Z, occ = new Uint8Array(N), rgb = new Uint8Array(N * 3);
+  const idx = (x, y, z) => (y * Z + z) * W + x;
+  for (let y = 0; y < Y; y++) for (let r = 0; r < Z; r++) for (let x = 0; x < W; x++) {
+    const p = (r * img.width + y * W + x) * 4, z = Z - 1 - r, i = idx(x, y, z);
+    if (px[p + 3] > 127) { occ[i] = 1; rgb[i * 3] = px[p]; rgb[i * 3 + 1] = px[p + 1]; rgb[i * 3 + 2] = px[p + 2]; }
+  }
+  // smoothed occupancy -> gradient normals, and voxel AO (share of filled voxels in a 5^3 box)
+  const at = (a, x, y, z) => (x < 0 || y < 0 || z < 0 || x >= W || y >= Y || z >= Z) ? 0 : a[idx(x, y, z)];
+  const blur = new Float32Array(N), ao = new Float32Array(N), nrm = new Float32Array(N * 3);
+  for (let y = 0; y < Y; y++) for (let z = 0; z < Z; z++) for (let x = 0; x < W; x++) {
+    let s = 0, s5 = 0;
+    for (let dy = -2; dy <= 2; dy++) for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
+      const v = at(occ, x + dx, y + dy, z + dz); s5 += v;
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(dz) < 2) s += v;
+    }
+    blur[idx(x, y, z)] = s / 27; ao[idx(x, y, z)] = Math.min(1.15, Math.max(0.55, 1 - 1.1 * (s5 / 125 - 0.5)));
+  }
+  for (let y = 0; y < Y; y++) for (let z = 0; z < Z; z++) for (let x = 0; x < W; x++) {
+    const i = idx(x, y, z); if (!occ[i]) continue;
+    let nx = at(blur, x - 1, y, z) - at(blur, x + 1, y, z);
+    let ny = at(blur, x, y - 1, z) - at(blur, x, y + 1, z);
+    let nz = at(blur, x, y, z - 1) - at(blur, x, y, z + 1);
+    const l = Math.hypot(nx, ny, nz) || 1; nrm[i * 3] = nx / l; nrm[i * 3 + 1] = ny / l; nrm[i * 3 + 2] = nz / l;
+  }
+  const layerCanvases = [];
+  for (let y = 0; y < Y; y++) { const lc = document.createElement("canvas"); lc.width = W; lc.height = Z; layerCanvases.push(lc); }
+  const hl = document.createElement("canvas"); hl.width = W; hl.height = Z;
+  return { label, img, W, Y, Z, occ, rgb, nrm, ao, idx, layerCanvases, hl, litFor: null };
+}
+
+/* recolour every layer; light is fixed to the camera, so it turns against the model */
+function paintLayers(m, yawDeg, lit) {
+  const key = lit ? Math.round(yawDeg) : "flat";
+  if (m.litFor === key) return; m.litFor = key;
+  const a = -yawDeg * Math.PI / 180;
+  let L = [-0.5, 0.75, -0.45]; const ll = Math.hypot(...L); L = L.map(v => v / ll);
+  const Lx = L[0] * Math.cos(a) - L[2] * Math.sin(a), Lz = L[0] * Math.sin(a) + L[2] * Math.cos(a), Ly = L[1];
+  for (let y = 0; y < m.Y; y++) {
+    const lc = m.layerCanvases[y], g = lc.getContext("2d"), im = g.createImageData(m.W, m.Z), d = im.data;
+    for (let r = 0; r < m.Z; r++) for (let x = 0; x < m.W; x++) {
+      const z = m.Z - 1 - r, i = m.idx(x, y, z), p = (r * m.W + x) * 4;
+      if (!m.occ[i]) continue;
+      let k = 1;
+      if (lit) {
+        const dot = Math.max(0, m.nrm[i * 3] * Lx + m.nrm[i * 3 + 1] * Ly + m.nrm[i * 3 + 2] * Lz);
+        k = (0.45 + 0.65 * dot) * m.ao[i];
+      }
+      d[p] = Math.min(255, m.rgb[i * 3] * k); d[p + 1] = Math.min(255, m.rgb[i * 3 + 1] * k);
+      d[p + 2] = Math.min(255, m.rgb[i * 3 + 2] * k); d[p + 3] = 255;
+    }
+    g.putImageData(im, 0, 0);
+  }
+}
+
+function paintHighlight(m, y) {
+  const g = m.hl.getContext("2d"); g.clearRect(0, 0, m.W, m.Z);
+  if (y < 0 || y >= m.Y) return;
+  g.drawImage(m.layerCanvases[y], 0, 0);
+  g.globalCompositeOperation = "source-in";
+  g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--hl").trim() || "#e8553d";
+  g.fillRect(0, 0, m.W, m.Z); g.globalCompositeOperation = "source-over";
+}
+
+/* ---------- rendering: rotate each layer about the shared pivot, squash, lift ---------- */
+function render() {
+  const m = state.model; if (!m) return;
+  const dpr = window.devicePixelRatio || 1, rect = view.getBoundingClientRect();
+  const cw = Math.round(rect.width * dpr), ch = Math.round(rect.height * dpr);
+  if (view.width !== cw || view.height !== ch) { view.width = cw; view.height = ch; }
+  const zoom = +$("zoom").value * dpr * (32 / Math.max(m.Y, 32)) * 1.6;
+  const squash = +$("pitch").value, step = +$("step").value, lit = $("lit").checked, fill = $("fill").checked;
+  const hlLayer = +$("layer").value;
+  paintLayers(m, state.yaw, lit);
+  paintHighlight(m, hlLayer);
+  ctx.clearRect(0, 0, cw, ch); ctx.imageSmoothingEnabled = false;
+  const totalH = m.Y * step * zoom + Math.hypot(m.W, m.Z) * zoom * squash;
+  const baseX = cw / 2, baseY = ch / 2 + totalH / 2 - Math.hypot(m.W, m.Z) * zoom * squash / 2;
+  const rad = state.yaw * Math.PI / 180;
+  const sub = fill ? Math.max(1, Math.round(step * zoom)) : 1;
+  for (let y = 0; y < m.Y; y++) {
+    const src = (y === hlLayer) ? m.hl : m.layerCanvases[y];
+    for (let s = 0; s < sub; s++) {
+      const lift = (y * step * zoom) + (fill ? s * (step * zoom) / sub : 0);
+      ctx.setTransform(1, 0, 0, squash, baseX, baseY - lift);
+      ctx.rotate(-rad);
+      ctx.drawImage(src, -m.W / 2 * zoom, -m.Z / 2 * zoom, m.W * zoom, m.Z * zoom);
+    }
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  $("angle").textContent = `${((state.yaw % 360) + 360) % 360 | 0}°  ·  ${m.W}×${m.Z} px × ${m.Y} 層`;
+}
+
+function drawStrip() {
+  const m = state.model; if (!m) return;
+  const scale = Math.max(2, Math.min(4, Math.floor(1600 / m.img.width)));
+  stripCv.width = m.img.width * scale; stripCv.height = m.img.height * scale + 14;
+  stripCv.style.width = stripCv.width + "px";
+  sctx.imageSmoothingEnabled = false; sctx.clearRect(0, 0, stripCv.width, stripCv.height);
+  sctx.drawImage(m.img, 0, 0, stripCv.width, m.img.height * scale);
+  const css = getComputedStyle(document.documentElement);
+  sctx.strokeStyle = css.getPropertyValue("--line").trim(); sctx.lineWidth = 1;
+  sctx.fillStyle = css.getPropertyValue("--muted").trim(); sctx.font = "10px JetBrains Mono, monospace";
+  for (let y = 0; y < m.Y; y++) {
+    const x0 = y * m.W * scale;
+    sctx.strokeRect(x0 + 0.5, 0.5, m.W * scale - 1, m.Z * scale - 1);
+    if (y % (m.Y > 32 ? 4 : 2) === 0) sctx.fillText(String(y), x0 + 2, m.Z * scale + 11);
+  }
+  const hlLayer = +$("layer").value;
+  if (hlLayer >= 0 && hlLayer < m.Y) {
+    sctx.strokeStyle = css.getPropertyValue("--hl").trim(); sctx.lineWidth = 2;
+    sctx.strokeRect(hlLayer * m.W * scale + 1, 1, m.W * scale - 2, m.Z * scale - 2);
+  }
+  $("stripInfo").textContent = `${m.label} · 左が地面側 · 各層は上から見た図（下端がキャラの正面）`;
+  stripCv.dataset.scale = scale;
+}
+
+/* ---------- loading ---------- */
+function loadImage(src) {
+  return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+}
+async function selectModel(def) {
+  try {
+    const img = await loadImage(def.src);
+    state.model = buildModel(img, def.layers, `${def.name} ${def.sub}`);
+  } catch (e) {
+    $("stripInfo").textContent = `${def.src} を読み込めませんでした`; return;
+  }
+  $("layer").max = state.model.Y - 1;
+  if (+$("layer").value > state.model.Y - 1) $("layer").value = -1;
+  document.querySelectorAll("#models button").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === def.id));
+  syncOutputs(); drawStrip(); state.dirty = true;
+}
+
+const modelsEl = $("models");
+MODELS.forEach(def => {
+  const b = document.createElement("button"); b.type = "button"; b.id = "model-" + def.id; b.dataset.id = def.id;
+  b.innerHTML = `${def.name}<small>${def.sub}</small>`; b.setAttribute("aria-pressed", "false");
+  b.addEventListener("click", () => selectModel(def)); modelsEl.appendChild(b);
+});
+
+$("upload").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f);
+  await selectModel({ id: "custom", name: f.name, sub: "", src: url, layers: Math.max(1, +$("nLayers").value || 32) });
+});
+
+/* ---------- controls ---------- */
+function syncOutputs() {
+  $("pitchOut").textContent = (+$("pitch").value).toFixed(2);
+  $("stepOut").textContent = (+$("step").value).toFixed(2);
+  $("zoomOut").textContent = "×" + $("zoom").value;
+  const l = +$("layer").value; $("layerOut").textContent = l < 0 ? "なし" : `${l} 層目`;
+}
+["pitch", "step", "zoom", "lit", "fill"].forEach(id => $(id).addEventListener("input", () => { syncOutputs(); state.dirty = true; }));
+$("layer").addEventListener("input", () => { syncOutputs(); drawStrip(); state.dirty = true; });
+$("spin").addEventListener("change", () => { state.spin = $("spin").checked; });
+if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { $("spin").checked = false; state.spin = false; }
+
+stripCv.addEventListener("click", (e) => {
+  const m = state.model; if (!m) return;
+  const r = stripCv.getBoundingClientRect(), sc = +stripCv.dataset.scale;
+  const y = Math.floor((e.clientX - r.left) / (m.W * sc));
+  $("layer").value = (+$("layer").value === y) ? -1 : y; syncOutputs(); drawStrip(); state.dirty = true;
+});
+
+const stage = $("stage");
+stage.addEventListener("pointerdown", (e) => { state.dragging = true; state.lastX = e.clientX; stage.setPointerCapture(e.pointerId); });
+stage.addEventListener("pointermove", (e) => {
+  if (!state.dragging) return;
+  state.yaw += (e.clientX - state.lastX) * 0.6; state.lastX = e.clientX; state.dirty = true;
+});
+const endDrag = () => { state.dragging = false; };
+stage.addEventListener("pointerup", endDrag); stage.addEventListener("pointercancel", endDrag);
+stage.addEventListener("wheel", (e) => {
+  e.preventDefault(); const z = $("zoom");
+  z.value = Math.min(+z.max, Math.max(+z.min, +z.value + (e.deltaY < 0 ? 1 : -1))); syncOutputs(); state.dirty = true;
+}, { passive: false });
+window.addEventListener("resize", () => { state.dirty = true; });
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { drawStrip(); state.dirty = true; });
+
+function tick(t) {
+  const dt = state.lastT ? (t - state.lastT) / 1000 : 0; state.lastT = t;
+  if (state.spin && !state.dragging) { state.yaw += dt * 40; state.dirty = true; }
+  if (state.dirty) { render(); state.dirty = false; }
+  requestAnimationFrame(tick);
+}
+syncOutputs();
+selectModel(MODELS[0]);
+requestAnimationFrame(tick);
+</script>

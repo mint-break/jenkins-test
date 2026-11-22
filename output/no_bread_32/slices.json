@@ -1,0 +1,17 @@
+{
+  "layers": 32,
+  "layer_width": 30,
+  "layer_height": 25,
+  "order": "bottom->top, left->right",
+  "front": "bottom edge of each layer",
+  "pivot": [
+    15.0,
+    12.5
+  ],
+  "X": 30,
+  "Y": 32,
+  "Z": 25,
+  "neck_y": 24,
+  "back_dx": 1,
+  "back_iou": 0.9294
+}

@@ -187,3 +187,31 @@ def resize_mask(mask: np.ndarray, out_w: int, out_h: int, mirror: bool = False) 
     cov = np.asarray(Image.fromarray(mask.astype(np.float32), "F").resize((out_w, out_h), Image.BOX))
     m = cov >= 0.5
     return m[:, ::-1] if mirror else m
+
+
+def remove_part(views: dict[str, "View"], iters: int = 300, grow_px: int = 10,
+                min_lum: float = 120) -> None:
+    """Erase the segmented part from every view (e.g. "no sandwich" variant).
+
+    The silhouette becomes the estimated body outline (protrusions dropped) and
+    the pixels the part covered are repainted by harmonic in-filling from the
+    surrounding body colours, so the carving and colouring see a bare body.
+    """
+    for v in views.values():
+        if v.part is None or not v.part.any():
+            continue
+        mask = nd.binary_fill_holes(body_span(v))
+        lab, n = nd.label(mask)
+        if n > 1:
+            mask = lab == (np.argmax(nd.sum(mask, lab, range(1, n + 1))) + 1)
+        # grow past the part's line art, and fill only from bright body pixels
+        hole = nd.binary_dilation(v.part, iterations=grow_px) & mask
+        lum = v.rgb @ np.array([0.299, 0.587, 0.114], np.float32)
+        src = mask & ~hole & (lum > min_lum)
+        _, (iy, ix) = nd.distance_transform_edt(~src, return_indices=True)
+        rgb = v.rgb.copy()
+        rgb[hole] = rgb[iy, ix][hole]          # nearest colour as a starting guess
+        for _ in range(iters):                  # then relax towards a smooth fill
+            blur = np.stack([nd.uniform_filter(rgb[..., k], 5) for k in range(3)], -1)
+            rgb[hole] = blur[hole]
+        v.rgb, v.mask, v.part = rgb, mask, None
