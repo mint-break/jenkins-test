@@ -1,0 +1,265 @@
+<meta charset="utf-8">
+<title>Mint Body 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: shape review sheet. Live 3D body first, then the four orthographic renders, then the checks against the art. */
+:root {
+  --bg: #f2f7f4; --panel: #ffffff; --fg: #1d2b25; --muted: #5d7068; --line: #d5e3dc;
+  --accent: #2f8f6a; --accent-soft: #d8f1e5; --stage: #e6f0eb; --warn: #8a5d0c; --warn-soft: #fbf1dc;
+  --f-display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --f-body: "M PLUS Rounded 1c", "Hiragino Sans", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121a17; --panel: #1a2420; --fg: #e3efe9; --muted: #93a8a0; --line: #2a3832;
+    --accent: #6fd3a8; --accent-soft: #1f3a2f; --stage: #18221e; --warn: #f0c060; --warn-soft: #3a3120; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121a17; --panel: #1a2420; --fg: #e3efe9; --muted: #93a8a0; --line: #2a3832;
+  --accent: #6fd3a8; --accent-soft: #1f3a2f; --stage: #18221e; --warn: #f0c060; --warn-soft: #3a3120; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+.wrap { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: 1.5rem; margin: 0; }
+h2 { font-family: var(--f-display); font-size: 1.05rem; margin: 0; }
+.chip { font-family: var(--f-mono); font-size: 12px; padding: 2px 9px; border-radius: 99px; background: var(--accent-soft); }
+.sub { margin: 0; color: var(--muted); }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 16px; }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; min-height: 460px; border-radius: 14px; overflow: hidden; background: var(--stage); touch-action: none; cursor: grab; }
+.stage:active { cursor: grabbing; }
+.stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
+.hint { position: absolute; right: 12px; top: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.badge { position: absolute; left: 12px; bottom: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); pointer-events: none; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.lbl { font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+.seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.seg button { font: inherit; font-size: 13px; padding: 7px 8px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 800; }
+.checks { display: grid; gap: 8px; }
+.checks label { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+.checks input { accent-color: var(--accent); width: 16px; height: 16px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 10px; margin: 0; font-size: 13px; }
+dt { color: var(--muted); }
+dd { margin: 0; font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+section.block { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+.head p { margin: 0; color: var(--muted); font-size: 12px; }
+.views { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 760px) { .views { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+figure { margin: 0; display: grid; gap: 6px; }
+figure img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+figcaption { font-size: 12px; color: var(--muted); }
+.views img { aspect-ratio: 1; object-fit: contain; padding: 8px; }
+.est { background: var(--warn-soft); border-radius: 10px; padding: 12px 14px; }
+.est h3 { margin: 0 0 6px; font-size: 13px; color: var(--warn); }
+.est ul { margin: 0; padding-left: 18px; font-size: 13px; }
+.err { color: #c0392b; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Mint Body 3D</h1>
+    <span class="chip">STEP 3 · 形状確認</span>
+    <p class="sub">Aポーズの4方向画像から再構築した胴体の3D形状です。スプライトスタックへの変換前の段階です</p>
+  </header>
+
+  <div class="main">
+    <div class="stage" id="stage">
+      <div class="hint">ドラッグで回転 · ホイールで拡大</div>
+      <div class="badge" id="badge">読み込み中</div>
+    </div>
+    <aside class="panel">
+      <div>
+        <div class="lbl">視点</div>
+        <div class="seg" id="viewSeg">
+          <button type="button" id="v-front" data-yaw="0" data-pitch="0" aria-pressed="true">正面</button>
+          <button type="button" id="v-side" data-yaw="90" data-pitch="0" aria-pressed="false">側面</button>
+          <button type="button" id="v-back" data-yaw="180" data-pitch="0" aria-pressed="false">背面</button>
+          <button type="button" id="v-top" data-yaw="0" data-pitch="89" aria-pressed="false">上面</button>
+        </div>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="spin"> 自動で回す</label>
+        <label><input type="checkbox" id="wire"> ワイヤーフレーム（断面のつながりを確認）</label>
+        <label><input type="checkbox" id="outline" checked> 輪郭線</label>
+      </div>
+      <dl id="facts"></dl>
+    </aside>
+  </div>
+
+  <section class="block">
+    <div class="head"><h2>4方向のプレビュー</h2><p>Preview/front.png · side.png · back.png · top.png（3Dモデルからの直交投影）</p></div>
+    <div class="views">
+      <figure><img src="Preview/front.png" alt="正面"><figcaption>正面</figcaption></figure>
+      <figure><img src="Preview/side.png" alt="側面"><figcaption>側面（顔は左向き）</figcaption></figure>
+      <figure><img src="Preview/back.png" alt="背面"><figcaption>背面</figcaption></figure>
+      <figure><img src="Preview/top.png" alt="上面"><figcaption>上面（画像の下が正面）</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="head"><h2>元絵との比較</h2><p>赤 = 3Dモデルの輪郭 · 緑 = 計測に使った輪郭点 · 灰 = 腕・足・しっぽ・葉として除外した点</p></div>
+    <figure><img src="Preview/compare_with_art.png" alt="元絵の上にモデルの輪郭を重ねた画像"><figcaption>正面 · 側面 · 背面 · 上面</figcaption></figure>
+    <figure style="max-width:560px"><img src="Preview/profile_chart.png" alt="高さごとの幅と奥行のグラフ"><figcaption>高さごとの半幅（左）と前後の奥行（右）。点が計測値、線が3Dモデル</figcaption></figure>
+    <div class="est"><h3>推定した部分（元絵から直接は測れない形）</h3><ul id="est"></ul></div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const PAL = { shadow: [161, 220, 180], base: [198, 252, 224], light: [214, 255, 234], outline: [38, 107, 81] };
+const rgb = (c) => new THREE.Color(c[0] / 255, c[1] / 255, c[2] / 255);
+const S = { yaw: 0, pitch: 8, dist: 1, drag: false, lx: 0, ly: 0, spin: false, dirty: true };
+
+async function main() {
+  let shape, report;
+  try {
+    shape = await (await fetch("Source/body_shape.json")).json();
+    report = await (await fetch("Source/analysis.json")).json();
+  } catch (e) { $("badge").textContent = "形状データを読み込めませんでした"; $("badge").classList.add("err"); return; }
+
+  $("est").innerHTML = shape.estimated.map(s => `<li>${s}</li>`).join("");
+  $("facts").innerHTML = `
+    <dt>高さ</dt><dd>${(shape.top - shape.bottom).toFixed(0)} px（底 ${shape.bottom.toFixed(0)} – 頭頂 ${shape.top.toFixed(0)}）</dd>
+    <dt>最大の幅</dt><dd>${(report.max_half_width_px * 2).toFixed(0)} px</dd>
+    <dt>最大の奥行</dt><dd>${(report.max_half_depth_front_px + report.max_half_depth_back_px).toFixed(0)} px</dd>
+    <dt>断面の丸さ</dt><dd>p = ${shape.superellipse_p.toFixed(2)}</dd>
+    <dt>メッシュ</dt><dd>${report.mesh.vertices.toLocaleString()} 頂点（body.obj）</dd>`;
+
+  // ---- geometry: the same rings as model.py (superellipse per height sample) ----
+  const H = shape.samples.h, W = shape.samples.half_width, DF = shape.samples.half_depth_front, DB = shape.samples.half_depth_back;
+  const p = shape.superellipse_p, seg = 128, ex = 2 / p;
+  const pos = [], idx = [];
+  const cy = (shape.bottom + shape.top) / 2;
+  pos.push(0, shape.bottom - cy, 0);
+  const rings = [];
+  for (let i = 1; i < H.length - 1; i++) {
+    const start = pos.length / 3;
+    for (let k = 0; k < seg; k++) {
+      const t = (k / seg) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
+      const ux = Math.sign(c) * Math.pow(Math.abs(c), ex), uz = Math.sign(s) * Math.pow(Math.abs(s), ex);
+      const d = uz < 0 ? DF[i] : DB[i];
+      pos.push(W[i] * ux, H[i] - cy, d * uz);
+    }
+    rings.push(start);
+  }
+  pos.push(0, shape.top - cy, 0);
+  const topIdx = pos.length / 3 - 1;
+  for (let k = 0; k < seg; k++) idx.push(0, rings[0] + (k + 1) % seg, rings[0] + k);
+  for (let r = 0; r < rings.length - 1; r++) for (let k = 0; k < seg; k++) {
+    const a = rings[r] + k, b = rings[r] + (k + 1) % seg, c = rings[r + 1] + k, d = rings[r + 1] + (k + 1) % seg;
+    idx.push(a, b, d, a, d, c);
+  }
+  const last = rings[rings.length - 1];
+  for (let k = 0; k < seg; k++) idx.push(topIdx, last + k, last + (k + 1) % seg);
+  for (let i = 0; i < idx.length; i += 3) { const t = idx[i + 1]; idx[i + 1] = idx[i + 2]; idx[i + 2] = t; }  // outward-facing winding
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+
+  // ---- soft cel, same formula as preview.py (light fixed to the viewer's upper left) ----
+  const v3 = (c) => new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uShadow: { value: v3(PAL.shadow) }, uBase: { value: v3(PAL.base) }, uLight: { value: v3(PAL.light) },
+      uGloss: { value: new THREE.Vector3(0.98, 1.0, 0.99) },
+      uL: { value: new THREE.Vector3(-0.45, 0.55, 0.7).normalize() },
+      uBottom: { value: shape.bottom - cy }, uTop: { value: shape.top - cy },
+    },
+    vertexShader: `
+      varying vec3 vN; varying float vY;
+      void main() { vN = normalize(normalMatrix * normal); vY = position.y;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `
+      uniform vec3 uShadow, uBase, uLight, uGloss, uL; uniform float uBottom, uTop;
+      varying vec3 vN; varying float vY;
+      void main() {
+        vec3 n = normalize(vN);
+        float d = dot(n, uL);
+        vec3 col = mix(uShadow, uBase, smoothstep(0.05, 0.22, d));
+        col = mix(col, uLight, smoothstep(0.72, 0.84, d));
+        vec3 h = normalize(uL + vec3(0.0, 0.0, 1.0));
+        float hn = (vY - uBottom) / (uTop - uBottom);
+        float g = smoothstep(0.982, 0.993, dot(n, h)) * smoothstep(0.55, 0.65, hn);
+        col = mix(col, uGloss, g * 0.8);
+        float rim = smoothstep(0.35, 0.0, clamp(n.z, 0.0, 1.0));
+        col *= 1.0 - 0.10 * rim;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  const body = new THREE.Mesh(geo, mat);
+  const outlineMat = new THREE.MeshBasicMaterial({ color: rgb(PAL.outline), side: THREE.BackSide });
+  const outline = new THREE.Mesh(geo, outlineMat); outline.scale.setScalar(1.012);
+  const wireMat = new THREE.MeshBasicMaterial({ color: rgb(PAL.outline), wireframe: true, transparent: true, opacity: 0.25 });
+  const wire = new THREE.Mesh(geo, wireMat); wire.visible = false;
+  const group = new THREE.Group(); group.add(outline, body, wire);
+
+  const scene = new THREE.Scene();
+  scene.add(group);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+  const key = new THREE.DirectionalLight(0xffffff, 0.75); key.position.set(-0.6, 0.8, 1.0); scene.add(key);
+
+  const stage = $("stage");
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  stage.prepend(renderer.domElement);
+  const span = (shape.top - shape.bottom) * 0.62;
+  const cam = new THREE.OrthographicCamera(-span, span, span, -span, -2000, 2000);
+
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    renderer.setSize(r.width, r.height, false);
+    const a = r.width / r.height, s = span / S.dist;
+    cam.left = -s * a; cam.right = s * a; cam.top = s; cam.bottom = -s; cam.updateProjectionMatrix();
+    S.dirty = true;
+  }
+  window.addEventListener("resize", resize); resize();
+
+  function frame(t) {
+    if (S.spin && !S.drag) { S.yaw += 0.4; S.dirty = true; }
+    if (S.dirty) {
+      const yaw = S.yaw * Math.PI / 180, pit = S.pitch * Math.PI / 180;
+      // camera orbits; model front faces -Z so yaw 0 looks at the face
+      cam.position.set(Math.sin(yaw) * Math.cos(pit) * 500 * -1, Math.sin(pit) * 500, -Math.cos(yaw) * Math.cos(pit) * 500);
+      cam.up.set(0, 1, 0); if (Math.abs(S.pitch) > 85) cam.up.set(0, 0, 1);
+      cam.lookAt(0, 0, 0);
+      // keep the light at the viewer's upper left
+      const right = new THREE.Vector3().crossVectors(cam.up, cam.position.clone().negate()).normalize().negate();
+      key.position.copy(cam.position.clone().normalize().multiplyScalar(1).add(new THREE.Vector3(0, 0.8, 0)).add(right.multiplyScalar(-0.6)));
+      outline.visible = $("outline").checked; wire.visible = $("wire").checked;
+      renderer.render(scene, cam);
+      $("badge").textContent = `yaw ${((S.yaw % 360) + 360) % 360 | 0}° · pitch ${S.pitch | 0}°`;
+      S.dirty = false;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  stage.addEventListener("pointerdown", (e) => { S.drag = true; S.lx = e.clientX; S.ly = e.clientY; stage.setPointerCapture(e.pointerId); });
+  stage.addEventListener("pointermove", (e) => {
+    if (!S.drag) return;
+    S.yaw += (e.clientX - S.lx) * 0.5; S.pitch = Math.max(-89, Math.min(89, S.pitch + (e.clientY - S.ly) * 0.4));
+    S.lx = e.clientX; S.ly = e.clientY; S.dirty = true; setPressed(null);
+  });
+  const end = () => { S.drag = false; };
+  stage.addEventListener("pointerup", end); stage.addEventListener("pointercancel", end);
+  stage.addEventListener("wheel", (e) => { e.preventDefault(); S.dist = Math.max(0.5, Math.min(3, S.dist * (e.deltaY < 0 ? 1.08 : 0.93))); resize(); }, { passive: false });
+  function setPressed(btn) { document.querySelectorAll("#viewSeg button").forEach(b => b.setAttribute("aria-pressed", b === btn)); }
+  document.querySelectorAll("#viewSeg button").forEach(b => b.addEventListener("click", () => {
+    S.yaw = +b.dataset.yaw; S.pitch = +b.dataset.pitch; S.dirty = true; setPressed(b);
+  }));
+  ["wire", "outline"].forEach(id => $(id).addEventListener("change", () => { S.dirty = true; }));
+  $("spin").addEventListener("change", () => { S.spin = $("spin").checked; });
+}
+main();
+</script>
