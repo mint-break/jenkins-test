@@ -32,7 +32,8 @@ from scipy import ndimage as nd
 
 @dataclass
 class LeafParams:
-    base: tuple = (4.0, 336.0, 4.0)        # right leaf; the left one is mirrored in x
+    base: tuple = (5.0, 360.0, 4.0)        # right leaf (mirrored for the left): just above the crown
+                                           # (349.8), so a short stem shows; the stem runs down into the head
     tip: tuple = (150.0, 436.0, 108.0)
     width: float = 113.0                   # true max width (sheet px)
     roll_deg: float = 80.0
@@ -44,7 +45,7 @@ class LeafParams:
     # width profile along the midrib (u = 0 base .. 1 tip), from the front view
     profile_u: tuple = (0.0, 0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 1.0)
     profile_w: tuple = (0.0, 8, 44, 68, 85, 100, 99, 95, 80, 60, 30, 0.0)
-    stem_len: float = 16.0
+    stem_len: float = 24.0
     stem_radius: float = 4.5
     colours: dict = field(default_factory=lambda: {
         "base": (127, 224, 169), "light": (147, 232, 182), "vein": (80, 180, 132),

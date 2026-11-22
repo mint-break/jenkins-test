@@ -54,6 +54,9 @@ def export_leaves(out_dir, params: leaves.LeafParams | None = None, views=None):
     d = os.path.join(out_dir, "Leaves")
     for sub in ("", "Albedo", "Normal"):
         os.makedirs(os.path.join(d, sub), exist_ok=True)
+        for f in os.listdir(os.path.join(d, sub)):          # no stale layers from an earlier run
+            if f.startswith("Layer_") and f.endswith(".png"):
+                os.remove(os.path.join(d, sub, f))
     files, idx = [], []
     for j, k in enumerate(range(k0, k1 + 1)):
         if alb[j][..., 3].max() == 0:
@@ -108,7 +111,8 @@ def export_leaves(out_dir, params: leaves.LeafParams | None = None, views=None):
             "true width 113 px solved from the front + side apparent widths",
             "bend, cupping, thickness (plush leaf), serration and vein pattern are drawn to "
             "match the art's style, not measured",
-            "stems: short, hidden in the crown; the art never shows them separately",
+            "stems: the leaf base sits ~10 px above the body's crown (the gentle crown rises above "
+            "the art's leaf base), so a short stem shows; its lower end is inside the head",
         ],
     }
     with open(os.path.join(d, "stack_config.json"), "w") as fh:

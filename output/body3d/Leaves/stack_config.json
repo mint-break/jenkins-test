@@ -3,11 +3,8 @@
   "part": "Leaves",
   "version": 1,
   "grid": "same canvas, pivot, axes and layer spacing as Body; layer index k sits at Body layer_height_px[0] + k * layer_spacing_px",
-  "layers": 26,
+  "layers": 25,
   "layer_index": [
-    58,
-    59,
-    60,
     61,
     62,
     63,
@@ -30,12 +27,11 @@
     80,
     81,
     82,
-    83
+    83,
+    84,
+    85
   ],
   "files": [
-    "Leaves/Layer_058.png",
-    "Leaves/Layer_059.png",
-    "Leaves/Layer_060.png",
     "Leaves/Layer_061.png",
     "Leaves/Layer_062.png",
     "Leaves/Layer_063.png",
@@ -58,12 +54,11 @@
     "Leaves/Layer_080.png",
     "Leaves/Layer_081.png",
     "Leaves/Layer_082.png",
-    "Leaves/Layer_083.png"
+    "Leaves/Layer_083.png",
+    "Leaves/Layer_084.png",
+    "Leaves/Layer_085.png"
   ],
   "albedo_files": [
-    "Leaves/Albedo/Layer_058.png",
-    "Leaves/Albedo/Layer_059.png",
-    "Leaves/Albedo/Layer_060.png",
     "Leaves/Albedo/Layer_061.png",
     "Leaves/Albedo/Layer_062.png",
     "Leaves/Albedo/Layer_063.png",
@@ -86,12 +81,11 @@
     "Leaves/Albedo/Layer_080.png",
     "Leaves/Albedo/Layer_081.png",
     "Leaves/Albedo/Layer_082.png",
-    "Leaves/Albedo/Layer_083.png"
+    "Leaves/Albedo/Layer_083.png",
+    "Leaves/Albedo/Layer_084.png",
+    "Leaves/Albedo/Layer_085.png"
   ],
   "normal_files": [
-    "Leaves/Normal/Layer_058.png",
-    "Leaves/Normal/Layer_059.png",
-    "Leaves/Normal/Layer_060.png",
     "Leaves/Normal/Layer_061.png",
     "Leaves/Normal/Layer_062.png",
     "Leaves/Normal/Layer_063.png",
@@ -114,12 +108,11 @@
     "Leaves/Normal/Layer_080.png",
     "Leaves/Normal/Layer_081.png",
     "Leaves/Normal/Layer_082.png",
-    "Leaves/Normal/Layer_083.png"
+    "Leaves/Normal/Layer_083.png",
+    "Leaves/Normal/Layer_084.png",
+    "Leaves/Normal/Layer_085.png"
   ],
   "layer_height_px": [
-    360.789,
-    367.0095,
-    373.23,
     379.4505,
     385.671,
     391.8915,
@@ -142,7 +135,9 @@
     497.64,
     503.8605,
     510.081,
-    516.3015
+    516.3015,
+    522.522,
+    528.7425
   ],
   "layer_spacing_px": 6.2204999999999995,
   "image": {
@@ -170,8 +165,8 @@
   "geometry_sheet_px": {
     "right_leaf": {
       "base": [
-        4.0,
-        336.0,
+        5.0,
+        360.0,
         4.0
       ],
       "tip": [
@@ -179,18 +174,18 @@
         436.0,
         108.0
       ],
-      "length_3d": 205.26,
+      "length_3d": 193.95,
       "true_width": 113.0,
       "roll_deg": 80.0,
       "width_dir": [
-        -0.29,
-        0.86,
-        -0.4198
+        -0.2124,
+        0.9061,
+        -0.366
       ],
       "upper_normal": [
-        -0.6403,
-        0.1516,
-        0.753
+        -0.6293,
+        0.1598,
+        0.7606
       ]
     },
     "left_leaf": "mirror of the right leaf in x",
@@ -260,6 +255,6 @@
     "blade roll 80.0 deg: the only flat-blade angle that matches both the front (100 px) and side (104 px) widths; the top view (an estimated drawing) shows the blades lying flatter, which the other views do not allow",
     "true width 113 px solved from the front + side apparent widths",
     "bend, cupping, thickness (plush leaf), serration and vein pattern are drawn to match the art's style, not measured",
-    "stems: short, hidden in the crown; the art never shows them separately"
+    "stems: the leaf base sits ~10 px above the body's crown (the gentle crown rises above the art's leaf base), so a short stem shows; its lower end is inside the head"
   ]
 }
