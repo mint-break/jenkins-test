@@ -50,3 +50,15 @@ been compiled or run in Unity yet. The lighting maths is the same as
 - Sort whole stacks against other objects by their ground point, not layer by layer.
 - Without the custom shader, use the baked `Body/Layer_###.png` (light from straight above),
   with the same import settings as the Albedo PNGs (Alpha Is Transparency ON).
+
+## Smooth body (optional, recommended)
+The plain stack draws each body layer's single cross-section several times across its height,
+so the outline and the shading step at every layer boundary (horizontal banding, most visible
+from the back and at 45 deg). With `interpolate` on, every copy blends the two nearest layers:
+the signed distance in `Body/SDF` (8-bit, 128 + 16 * px inside the edge) is interpolated and
+thresholded, and the normals are interpolated, so outline and shading change continuously.
+- Import `Body/SDF/*.png` as Default, **sRGB off**, Single Channel (R), Compression None,
+  Filter Bilinear, and assign them to the Body part's `sdf` (000..063), tick `interpolate`.
+- Albedo sprites of the Body: Mesh Type **Full Rect** (a tight mesh would clip the interpolated
+  outline where the next layer is larger).
+- Other parts keep `interpolate` off.

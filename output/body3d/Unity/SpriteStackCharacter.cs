@@ -26,6 +26,10 @@ public class SpriteStackCharacter : MonoBehaviour
         [Range(0f, 1f)] public float glossScale = 1f;
         [Tooltip("Parts at the same grid index are drawn in ascending rank (Body 0, Leaves 1)")]
         public int rank;
+        [Tooltip("Body only: interpolate between neighbouring layers (needs sdf, Body/SDF/Layer_###.png, "
+               + "imported as Default, sRGB off, Single Channel R). Removes the horizontal banding.")]
+        public bool interpolate;
+        public Texture2D[] sdf;
     }
 
     public Part[] parts;
@@ -105,6 +109,26 @@ public class SpriteStackCharacter : MonoBehaviour
             _mpb.SetFloat("_Squash", squash);
             _mpb.SetFloat("_Height01", (Mathf.Floor(it.grid) + 0.5f) / height01Divisor);
             _mpb.SetFloat("_TwoSided", it.part.twoSided ? 1f : 0f);
+            if (it.part.interpolate && it.part.sdf != null && it.part.sdf.Length == it.part.layers.Length)
+            {
+                // copy bottom at grid height h; centres of layer j at j + 0.5 -> blend j and j + 1
+                int n = it.part.layers.Length;
+                float x = it.grid - it.part.layerIndex[0] + 0.5f / copiesPerLayer - 0.5f;
+                int j = Mathf.FloorToInt(x);
+                float t = x - j;
+                if (j < 0) { j = 0; t = 0f; }
+                if (j >= n - 1) { j = n - 1; t = 0f; }
+                int j1 = Mathf.Min(j + 1, n - 1);
+                it.sr.sprite = it.part.layers[j];
+                _mpb.SetTexture("_NormalTex", it.part.normals[j]);
+                _mpb.SetTexture("_MainTex1", it.part.layers[j1].texture);
+                _mpb.SetTexture("_NormalTex1", it.part.normals[j1]);
+                _mpb.SetTexture("_SdfTex", it.part.sdf[j]);
+                _mpb.SetTexture("_SdfTex1", it.part.sdf[j1]);
+                _mpb.SetFloat("_T", t);
+                _mpb.SetFloat("_Interp", 1f);
+            }
+            else _mpb.SetFloat("_Interp", 0f);
             _mpb.SetFloat("_GlossScale", it.part.glossScale);
             it.sr.SetPropertyBlock(_mpb);
         }

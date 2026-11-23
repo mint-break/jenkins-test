@@ -35,6 +35,12 @@ Shader "SpriteStack/Lit"
         _RimStrength ("Rim darkening", Range(0, 1)) = 0.10
         [Toggle] _TwoSided ("Two-sided (thin parts: leaves)", Float) = 0
         _GlossScale ("Gloss scale (per part)", Range(0, 1)) = 1
+        [Toggle] _Interp ("Interpolate with the next layer (Body: SDF + normals)", Float) = 0
+        _MainTex1 ("Next layer albedo", 2D) = "black" {}
+        _NormalTex1 ("Next layer normal", 2D) = "black" {}
+        _SdfTex ("This layer SDF", 2D) = "black" {}
+        _SdfTex1 ("Next layer SDF", 2D) = "black" {}
+        _T ("Blend towards the next layer 0..1", Range(0, 1)) = 0
     }
 
     SubShader
@@ -61,6 +67,8 @@ Shader "SpriteStack/Lit"
             float _BaseFrom, _BaseTo, _LightFrom, _LightTo;
             float _GlossFrom, _GlossTo, _GlossStrength, _GlossMinHeight, _GlossFullHeight, _RimStrength;
             float _TwoSided, _GlossScale;
+            sampler2D _MainTex1, _NormalTex1, _SdfTex, _SdfTex1;
+            float _Interp, _T;
 
             struct appdata { float4 vertex : POSITION; float2 uv : TEXCOORD0; fixed4 color : COLOR; };
             struct v2f { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; fixed4 color : COLOR; };
@@ -97,6 +105,24 @@ Shader "SpriteStack/Lit"
                 fixed4 albedo = tex2D(_MainTex, i.uv) * i.color;
                 float3 n = tex2D(_NormalTex, i.uv).rgb * 2.0 - 1.0;   // import the normal PNG as a plain
                                                                        // texture (sRGB off), NOT as "Normal map"
+                if (_Interp > 0.5)
+                {
+                    // continuous stack: blend this layer with the next one. SDF (8-bit,
+                    // 128 + 16 * px inside the edge) is interpolated, then thresholded,
+                    // so the outline is the real cross-section between the two layers.
+                    float d0 = (tex2D(_SdfTex, i.uv).r * 255.0 - 128.0) / 16.0;
+                    float d1 = (tex2D(_SdfTex1, i.uv).r * 255.0 - 128.0) / 16.0;
+                    float cov = saturate(0.5 + lerp(d0, d1, _T));
+                    float3 n1 = tex2D(_NormalTex1, i.uv).rgb * 2.0 - 1.0;
+                    bool h0 = dot(n, n) > 0.25, h1 = dot(n1, n1) > 0.25;
+                    if (!h0) n = n1;
+                    if (!h1) n1 = n;
+                    n = lerp(n, n1, _T);
+                    fixed4 albedo1 = tex2D(_MainTex1, i.uv);
+                    fixed3 c0 = albedo.a > 0.004 ? albedo.rgb / albedo.a : albedo1.rgb / max(albedo1.a, 0.004);
+                    albedo = fixed4(c0, cov);
+                    if (cov <= 0.0) discard;
+                }
                 float a = radians(_Yaw);
                 float c = cos(a), s = sin(a);
                 n.xy = float2(n.x * c - n.y * s, n.x * s + n.y * c);
