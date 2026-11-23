@@ -138,10 +138,11 @@ def character_config(out_dir, parts_cfgs):
         e["draw_order"] = o
         e["height_px"] = round(e["index"] * sp, 4)
     top_index = int(math.ceil(max(e["index"] + e["span"] for e in entries))) - 1
+    min_index = int(math.floor(min(e["index"] for e in entries)))
     cfg = {
         "name": "Mint", "version": 1,
         "canvas": body["image"], "pivot": body["pivot"], "axes": body["axes"],
-        "layer_spacing_px": sp, "grid_layers": top_index + 1,
+        "layer_spacing_px": sp, "grid_layers": top_index + 1, "min_index": min_index,
         "height01_divisor": body["layers"],
         "parts": {"Body": {"config": "Body/stack_config.json", "two_sided": False, "gloss_scale": 1.0}},
         "draw": entries,
@@ -154,12 +155,12 @@ def character_config(out_dir, parts_cfgs):
         "rendering": body["rendering"],
     }
     for pc in parts_cfgs:
-        cfg["parts"][pc["part"]] = {"config": f"{pc['part']}/stack_config.json",
+        cfg["parts"][pc["part"]] = {"config": pc.get("config_path", f"{pc['part']}/stack_config.json"),
                                     "two_sided": pc["render"]["two_sided"],
                                     "gloss_scale": pc["render"]["gloss_scale"],
                                     "span": pc.get("layer_span", 1.0)}
     cfg["parts"]["Body"]["span"] = 1.0
-    cfg["planned_parts"] = [p for p in ["Face", "Arms", "Feet", "Tail"] if p not in cfg["parts"]]
+    cfg["planned_parts"] = [p for p in ["Face", "Arms", "Feet", "Tail", "Bread"] if p not in cfg["parts"]]
     with open(os.path.join(out_dir, "character_config.json"), "w") as fh:
         json.dump(cfg, fh, indent=2, ensure_ascii=False)
     return cfg
@@ -279,7 +280,7 @@ def main(argv=None):
     ap.add_argument("--order", default="front,side,back,top")
     ap.add_argument("--out", default="output/body3d")
     ap.add_argument("--roll", type=float, default=80.0, help="leaf blade roll about the midrib (deg)")
-    ap.add_argument("--parts", default="leaves,face", help="parts to (re)export; others are reused")
+    ap.add_argument("--parts", default="leaves,face,limbs", help="parts to (re)export; others are reused")
     a = ap.parse_args(argv)
     views = load_views(a.input, order=a.order)
     todo = a.parts.split(",")
@@ -296,9 +297,19 @@ def main(argv=None):
     else:
         fcfg = json.load(open(os.path.join(a.out, "Face", "stack_config.json")))
     cfgs.append(fcfg)
+    from . import limbs
+    if "limbs" in todo:
+        shape, mF, mS = face.build_shape(views)
+        lim = limbs.Limbs()
+        cfgs += limbs.export_limbs(a.out, shape, lim)
+        limbs.ortho_check(lim, shape, views, mF, mS, os.path.join(a.out, "Preview", "limbs_vs_art.png"))
+    elif os.path.exists(os.path.join(a.out, "Limbs", "Arms", "stack_config.json")):
+        for w in ("Arms", "Feet"):
+            cfgs.append(json.load(open(os.path.join(a.out, "Limbs", w, "stack_config.json"))))
     ccfg = character_config(a.out, cfgs)
     previews(a.out, ccfg, views, pts)
     face_vs_art(a.out, ccfg, views)
+    print(", ".join(f"{c['part']}: {c['layers']}" for c in cfgs[2:]))
     print(f"leaves: {lcfg['layers']} layers; face: {fcfg['layers']} layers "
           f"(index {fcfg['layer_index'][0]}..{fcfg['layer_index'][-1]}); "
           f"character draw entries: {len(ccfg['draw'])}")

@@ -135,7 +135,8 @@ def lit_items(items, spacing, yaw, pal, squash=0.75, out_scale=1.0, outline=(38,
     sq = max(1, int(round(S * squash)))
     lift = spacing * out_scale
     top = max(it["index"] + it["span"] for it in items)
-    Hc = int(math.ceil(sq + lift * top)) + 12
+    low = min(0.0, min(it["index"] for it in items))
+    Hc = int(math.ceil(sq + lift * (top - low))) + 12
     canvas = np.zeros((Hc, S, 4), np.float32)
     base_y = Hc - 6 - sq
     c, s_ = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
@@ -161,7 +162,7 @@ def lit_items(items, spacing, yaw, pal, squash=0.75, out_scale=1.0, outline=(38,
             draws.append((round(it["index"] + it["span"] * k / copies, 6), j, layer))
     draws.sort(key=lambda t: (t[0], t[1]))
     for h, _, layer in draws:
-        y = int(round(base_y - h * lift))
+        y = int(round(base_y - (h - low) * lift))
         y0, y1 = max(y, 0), min(y + sq, Hc)
         if y1 > y0:
             src = layer[y0 - y:y1 - y]

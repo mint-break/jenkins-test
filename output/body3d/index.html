@@ -103,7 +103,7 @@ figcaption { font-size: 12px; color: var(--muted); }
   </div>
 
   <section class="block">
-    <div class="head"><h2>胴体＋葉＋顔を回して確認（法線ライティング）</h2><p>character_config.json の描画順で Body・Leaves・Face の層を実際に読み込み、Unity用シェーダーと同じ計算で描画</p></div>
+    <div class="head"><h2>キャラクターを回して確認（法線ライティング）</h2><p>character_config.json の描画順で Body・Leaves・Face・Arms・Feet の層を実際に読み込み、Unity用シェーダーと同じ計算で描画</p></div>
     <div class="main">
       <div class="stage" id="stackStage">
         <div class="hint">ドラッグで回転</div>
@@ -417,7 +417,7 @@ async function stackViewer() {
     for (let k = 0; k < n; k++) {
       const holder = new THREE.Object3D();          // squash after rotation, like the Unity builder
       const h = Math.round((e.index + e.span * k / n) * 1e6) / 1e6;
-      holder.userData.lift = h * sp;
+      holder.userData.lift = (h - (ch.min_index || 0)) * sp;
       const q = new THREE.Mesh(geo, mat);
       q.userData.sortKey = [h, j];
       holder.add(q); scene.add(holder); holders.push(holder); quads.push(q);
@@ -426,7 +426,7 @@ async function stackViewer() {
   // all copies of all parts in height order (ties: draw list order, Body first)
   quads.slice().sort((a, b) => a.userData.sortKey[0] - b.userData.sortKey[0] || a.userData.sortKey[1] - b.userData.sortKey[1])
     .forEach((q, i) => { q.renderOrder = i; });
-  const total = ch.grid_layers * sp;
+  const total = (ch.grid_layers - (ch.min_index || 0)) * sp;
   const cam = new THREE.OrthographicCamera(-300, 300, 300, -300, -10, 10);
   const S = { yaw: 0, drag: false, lx: 0, spin: true, dirty: true };
   function layout() {
@@ -458,7 +458,7 @@ async function stackViewer() {
       uni.uYaw.value = r;
       quads.forEach(q => { q.rotation.z = r; });
       renderer.render(scene, cam);
-      badge.textContent = `yaw ${((S.yaw % 360) + 360) % 360 | 0}° · ${draw.length} 層（胴体 ${L} · 葉 · 顔）· ${quads.length} 回描画`;
+      badge.textContent = `yaw ${((S.yaw % 360) + 360) % 360 | 0}° · ${draw.length} 層（胴体 ${L} · 葉 · 顔 · 腕 · 足）· ${quads.length} 回描画`;
       S.dirty = false;
     }
     requestAnimationFrame(frame);

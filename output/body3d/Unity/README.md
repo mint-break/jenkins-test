@@ -9,7 +9,7 @@ been compiled or run in Unity yet. The lighting maths is the same as
 - `SpriteStackCharacter.cs` - builds the stack from several parts on one layer grid and turns it
 
 ## Steps
-1. Copy `Body/Albedo`, `Body/Normal`, `Leaves/Albedo`, `Leaves/Normal`, `SpriteStackLit.shader`
+1. Copy the `Albedo` and `Normal` folders of Body, Face, Leaves, Limbs/Arms, Limbs/Feet, `SpriteStackLit.shader`
    and `SpriteStackCharacter.cs` into `Assets/`.
 2. Albedo PNGs: Texture Type **Sprite (2D and UI)**, Sprite Mode Single, Pivot **Center**,
    Pixels Per Unit e.g. 100, Filter Bilinear, Compression None (or High Quality),
@@ -23,6 +23,9 @@ been compiled or run in Unity yet. The lighting maths is the same as
    - Body: 64 Albedo sprites + 64 Normal textures, layerIndex 0..63, rank 0, twoSided off, glossScale 1
    - Face: sprites/normals of `Face/`, layerIndex from `Face/stack_config.json` (fractional),
      span 0.125, rank 2, twoSided off, glossScale 0
+   - Arms / Feet: sprites/normals of `Limbs/Arms` and `Limbs/Feet`, layerIndex from their
+     `stack_config.json` (Feet go negative: below the body's first layer), span 1, rank 3 / 4,
+     twoSided off, glossScale 0
    - Leaves: the sprites/normals of `Leaves/`, layerIndex from `Leaves/stack_config.json`
      (`layer_index`, currently 61..84), rank 1, **twoSided on**, glossScale 0.35
    Set the material, `layerSpacingPx` (`character_config.json` → `layer_spacing_px`) and the
