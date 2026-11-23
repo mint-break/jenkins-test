@@ -130,6 +130,13 @@ figcaption { font-size: 12px; color: var(--muted); }
   </section>
 
   <section class="block">
+    <div class="head"><h2>胴体の縞の改善（修正前と後）</h2><p>形状と既存の64枚・メッシュはそのまま。隣の層との間を補間して描画（Body/SDF, Body/NormalExt を追加）</p></div>
+    <figure><img src="Preview/smoothing_lit_zoom.png" alt="法線ライティングでの修正前と後の拡大比較（正面・45度・側面・背面）"><figcaption>smoothing_lit_zoom.png · 左が修正前、右が修正後（法線ライティング、頭部の拡大）</figcaption></figure>
+    <figure><img src="Preview/smoothing_lit_before_after.png" alt="法線ライティングでの修正前と後の全体比較"><figcaption>smoothing_lit_before_after.png · 全体</figcaption></figure>
+    <figure><img src="Preview/lighting_comparison.png" alt="焼き込みの修正前・後と法線ライティングの比較"><figcaption>lighting_comparison.png · 焼き込み（修正前 / 修正後）と法線ライティング（修正後）</figcaption></figure>
+  </section>
+
+  <section class="block">
     <div class="head"><h2>しっぽのパーツ</h2><p>Tail/ · 背中の下の丸いしっぽ。体とのつなぎ目は丸く埋めています</p></div>
     <figure><img src="Preview/limbs_vs_art.png" alt="元絵に胴体・手足・しっぽの輪郭を重ねた画像"><figcaption>limbs_vs_art.png · 赤 = 胴体＋腕＋足＋しっぽのモデルの輪郭（正面・側面・背面）。背面図のしっぽは輪郭の内側に描かれているため、背面では赤線に出ません</figcaption></figure>
   </section>

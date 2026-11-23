@@ -110,8 +110,10 @@ def _f(a):
 
 def _prep(albedo, normal, sdf8, yaw, S, sq):
     """Rotate + squash one layer's channels once."""
-    def tr(ch, resample=Image.BILINEAR):
-        im = Image.fromarray(_f(ch), "F").resize((S, S), resample).rotate(yaw, resample=resample)
+    def tr(ch, resample=Image.BILINEAR, fill=0.0):
+        # corners exposed by the rotation take `fill` (the SDF needs "outside", not 0 = on the edge)
+        im = Image.fromarray(_f(ch), "F").resize((S, S), resample).rotate(yaw, resample=resample,
+                                                                           fillcolor=fill)
         return np.asarray(im.resize((S, sq), resample))
     a = albedo[..., 3] / 255.0
     rgb = np.stack([tr(albedo[..., k] / 255.0 * a) for k in range(3)], -1)
@@ -128,7 +130,7 @@ def _prep(albedo, normal, sdf8, yaw, S, sq):
     N = np.stack([nv[0] * c - nv[1] * s, nv[0] * s + nv[1] * c, nv[2]], -1)
     ln = np.linalg.norm(N, axis=-1, keepdims=True)
     N = np.divide(N, ln, out=np.zeros_like(N), where=ln > 0.5)    # 0 where no normal
-    d = tr(decode(sdf8)) * (S / albedo.shape[0])                   # px at output scale
+    d = tr(decode(sdf8), fill=-SDF_RANGE) * (S / albedo.shape[0])  # px at output scale
     return {"rgb": rgb, "a": aa, "N": N, "d": d}
 
 
