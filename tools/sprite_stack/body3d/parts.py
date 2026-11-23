@@ -280,7 +280,7 @@ def main(argv=None):
     ap.add_argument("--order", default="front,side,back,top")
     ap.add_argument("--out", default="output/body3d")
     ap.add_argument("--roll", type=float, default=80.0, help="leaf blade roll about the midrib (deg)")
-    ap.add_argument("--parts", default="leaves,face,limbs", help="parts to (re)export; others are reused")
+    ap.add_argument("--parts", default="leaves,face,limbs,tail", help="parts to (re)export; others are reused")
     a = ap.parse_args(argv)
     views = load_views(a.input, order=a.order)
     todo = a.parts.split(",")
@@ -306,6 +306,13 @@ def main(argv=None):
     elif os.path.exists(os.path.join(a.out, "Limbs", "Arms", "stack_config.json")):
         for w in ("Arms", "Feet"):
             cfgs.append(json.load(open(os.path.join(a.out, "Limbs", w, "stack_config.json"))))
+    if "tail" in todo:
+        shape, mF, mS = face.build_shape(views)
+        lim = limbs.Limbs(body=shape)
+        cfgs += limbs.export_limbs(a.out, shape, lim, parts=(("Tail", "Tail"),))
+        limbs.ortho_check(lim, shape, views, mF, mS, os.path.join(a.out, "Preview", "limbs_vs_art.png"))
+    elif os.path.exists(os.path.join(a.out, "Tail", "stack_config.json")):
+        cfgs.append(json.load(open(os.path.join(a.out, "Tail", "stack_config.json"))))
     ccfg = character_config(a.out, cfgs)
     previews(a.out, ccfg, views, pts)
     face_vs_art(a.out, ccfg, views)

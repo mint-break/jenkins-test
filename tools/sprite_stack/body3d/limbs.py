@@ -60,11 +60,23 @@ class FootParams:
     ry_up: float = 26.0
 
 
+@dataclass
+class TailParams:
+    # side view: protrudes from the back h=33..100, back edge up to z=175 at h~80;
+    # back view: a round outline 52 px wide around h=37..85 on the centre line
+    centre: tuple = (0.0, 70.0, 148.0)
+    rx: float = 26.0
+    ry: float = 30.0
+    rz: float = 27.0
+    tilt_deg: float = -20.0       # top leans back, as the side view's teardrop
+
+
 class Limbs:
     """Implicit solids. F < 0 inside (approximately a distance in sheet px)."""
 
     def __init__(self, arm: ArmParams | None = None, foot: FootParams | None = None,
-                 body=None, fillet: float = 12.0):
+                 body=None, fillet: float = 12.0, tail: TailParams | None = None):
+        self.tail = tail or TailParams()
         self.body = body                   # BodyShape: arms/feet blend into it with a fillet
         self.fillet = fillet
         self.arm = arm or ArmParams()
@@ -128,9 +140,21 @@ class Limbs:
         d = (np.power(np.maximum(f, 1e-9), 1.0 / b.p) - 1) * np.maximum(r, 1.0)
         return np.where((Y < b.bottom) | (Y > b.top), 1e3, d)
 
+    def F_tail(self, X, Y, Z):
+        t = self.tail
+        cx, cy, cz = t.centre
+        a = math.radians(t.tilt_deg)
+        dy, dz = Y - cy, Z - cz
+        yr = dy * math.cos(a) - dz * math.sin(a)          # rotate about x: top leans back
+        zr = dy * math.sin(a) + dz * math.cos(a)
+        q = np.sqrt(((X - cx) / t.rx) ** 2 + (yr / t.ry) ** 2 + (zr / t.rz) ** 2)
+        return (q - 1) * min(t.rx, t.ry, t.rz)
+
     def F(self, X, Y, Z, which):
         if which == "Arms":
             fl = np.minimum(self.F_arm(X, Y, Z, +1), self.F_arm(X, Y, Z, -1))
+        elif which == "Tail":
+            fl = self.F_tail(X, Y, Z)
         else:
             fl = np.minimum(self.F_foot(X, Y, Z, +1), self.F_foot(X, Y, Z, -1))
         if self.body is None or self.fillet <= 0:
@@ -155,6 +179,10 @@ class Limbs:
     def y_range(self, which):
         if which == "Arms":
             return self.arm.tip_h, self.arm.top_h
+        if which == "Tail":
+            t = self.tail
+            r = max(t.ry, t.rz)
+            return t.centre[1] - r - 2, t.centre[1] + r + 2
         f = self.foot
         return 0.0, f.centre[1] + f.ry_up
 
@@ -230,7 +258,8 @@ def _fname(i):
     return f"Layer_{i:03d}.png" if i >= 0 else f"Layer_n{-i:03d}.png"
 
 
-def export_limbs(out_dir, body_shape, limbs: Limbs | None = None):
+def export_limbs(out_dir, body_shape, limbs: Limbs | None = None,
+                 parts=(("Arms", "Limbs/Arms"), ("Feet", "Limbs/Feet"))):
     body_cfg = json.load(open(os.path.join(out_dir, "Body", "stack_config.json")))
     sp = body_cfg["layer_spacing_px"]
     scale = body_cfg["scale"]["canvas_px_per_sheet_px"]
@@ -240,8 +269,8 @@ def export_limbs(out_dir, body_shape, limbs: Limbs | None = None):
     pal = {k: np.array(v, float) for k, v in body_cfg["lighting"]["palette_rgb"].items()}
     limbs = limbs or Limbs(body=body_shape)
     cfgs = []
-    for which in ("Arms", "Feet"):
-        d = os.path.join(out_dir, "Limbs", which)
+    for which, rel in parts:
+        d = os.path.join(out_dir, rel)
         for s in ("", "Albedo", "Normal"):
             os.makedirs(os.path.join(d, s), exist_ok=True)
             for f in os.listdir(os.path.join(d, s)):
@@ -257,8 +286,16 @@ def export_limbs(out_dir, body_shape, limbs: Limbs | None = None):
             Image.fromarray(Bk, "RGBA").save(os.path.join(d, fn))
             files.append(fn)
             idx.append(i)
-        rel = f"Limbs/{which}"
-        if which == "Arms":
+        if which == "Tail":
+            t = limbs.tail
+            geom = {"tail": {"centre": list(t.centre), "rx": t.rx, "ry": t.ry, "rz": t.rz,
+                             "tilt_deg": t.tilt_deg}}
+            est = ["tail: tilted ellipsoid; width from the back view's round outline (52 px), "
+                   "depth and height from the side view (back edge z=175 at h~80, h=33..100)",
+                   "the back view's outline (h 37..85) and the side view (h 33..100) disagree on the "
+                   "height; the ellipsoid takes the middle (h 34..94)",
+                   "the joint to the body is a rounded fillet (smooth union)"]
+        elif which == "Arms":
             a = limbs.arm
             geom = {"right_arm": {"front_view": {"h": list(a.front_h), "centre_x": list(a.front_c),
                                                  "half_width": list(a.front_r)},
@@ -307,7 +344,10 @@ def ortho_check(limbs: Limbs, body_shape, views, mF, mS, path):
     """Outline of body + limbs (red) over the front and side art (orthographic)."""
     from PIL import ImageDraw
     tiles = []
-    for view, m in (("front", mF), ("side", mS)):
+    for view, m in (("front", mF), ("side", mS), ("back", None)):
+        if m is None:
+            from . import analyze
+            m = analyze.measure(views["back"], "frontback")
         v = views[view]
         H, W = v.h, v.w
         rows = np.arange(H)
@@ -318,10 +358,12 @@ def ortho_check(limbs: Limbs, body_shape, views, mF, mS, path):
         for t in np.linspace(-200, 200, 161):            # march along the view direction
             if view == "front":
                 X, Z = U, np.full_like(U, t)
+            elif view == "back":
+                X, Z = -U, np.full_like(U, t)
             else:
                 X, Z = np.full_like(U, t), U
             inside = (limbs.F(X, Hh, Z, "Arms") <= 0) | (limbs.F(X, Hh, Z, "Feet") <= 0) | \
-                     (body_shape.F(X, Hh, Z) <= 0)
+                     (limbs.F(X, Hh, Z, "Tail") <= 0) | (body_shape.F(X, Hh, Z) <= 0)
             occ |= inside
         im = Image.fromarray(v.rgb.astype(np.uint8)).convert("RGBA")
         over = np.zeros((H, W, 4), np.uint8)
