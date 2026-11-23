@@ -371,7 +371,7 @@ def export(shape: BodyShape, pal, out_dir, layers=64, size=512, scale=1.2, squas
         "source": {"mesh": "Source/body.obj", "profiles": "Source/body_shape.json",
                    "analysis": "Source/analysis.json", "shape_checks": "Source/shape_checks.json",
                    "scripts": "Source/scripts"},
-        "unity": {"shader": "Unity/SpriteStackLit.shader", "builder": "Unity/SpriteStackBody.cs",
+        "unity": {"shader": "Unity/SpriteStackLit.shader", "builder": "Unity/SpriteStackCharacter.cs",
                   "readme": "Unity/README.md", "pipeline": "Built-in (Unity 2020.3)",
                   "status": "not compiled in Unity yet (no editor in the build environment)"},
         "body_height_sheet_px": H,

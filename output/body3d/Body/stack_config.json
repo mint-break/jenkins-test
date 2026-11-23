@@ -396,34 +396,34 @@
     "colour_in_transparent_px": 0,
     "empty_layers": [],
     "layer_extent_error_sheet_px": {
-      "mean": 0.2149452671816595,
-      "max": 0.41082075644444416
+      "mean": 0.21746364397133985,
+      "max": 0.41570951681869417
     },
     "centre_x_drift_px": 0.0,
     "max_area_change_mid_layers": 0.20211062117941675,
-    "max_rim_colour_step_between_layers": 10.270898442021434,
+    "max_rim_colour_step_between_layers": 8.164170506912455,
     "stripes_front_baked": {
-      "p95_second_diff": 1.214699999999986,
-      "max_second_diff": 6.114000000000004
+      "p95_second_diff": 1.2389999999999872,
+      "max_second_diff": 4.113999999999976
     },
     "stripes_front_lit": {
-      "p95_second_diff": 0.5980000000000416,
-      "max_second_diff": 21.042999999999978
+      "p95_second_diff": 0.7010000000000218,
+      "max_second_diff": 17.22800000000001
     },
     "stripes_back_lit": {
-      "p95_second_diff": 0.7009999999999934,
-      "max_second_diff": 21.456000000000017
+      "p95_second_diff": 0.7064999999999912,
+      "max_second_diff": 13.754999999999995
     },
     "normal_maps": {
       "unit_length_error_p99": 0.0047942683599940805,
       "coverage_mismatch_px": 0
     },
     "albedo_colour_in_transparent_px": 0,
-    "turn_area_max_jump": 0.019205606841940843
+    "turn_area_max_jump": 0.018664955836715208
   },
   "estimated": [
     "head top (gentle crown): width measured up to h=248px, depth up to h=304px (the leaf overlaps the back of the head in the side view); above that, slope-matched ellipses rise gently to a broad crown at h=350px",
-    "body bottom: rounded from h=78px down to h=18px (feet cover it; the end height is the body's lower outline seen between the feet)",
+    "body bottom: rounded from h=58px down to h=18px (feet cover it; the end height is the body's lower outline seen between the feet)",
     "sides behind the arms: spline bridged between the measured rows above and below the arms",
     "back behind the tail: front edge x 1.03 (back/front ratio just above the tail)",
     "left/right symmetry: front and back edges on both sides averaged into one width",

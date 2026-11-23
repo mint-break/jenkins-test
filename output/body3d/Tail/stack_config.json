@@ -3,8 +3,9 @@
   "part": "Tail",
   "version": 1,
   "grid": "same canvas, pivot, axes and layer spacing as Body; negative layer indices are below the body's first layer (file names Layer_n###)",
-  "layers": 13,
+  "layers": 14,
   "layer_index": [
+    3,
     4,
     5,
     6,
@@ -21,6 +22,7 @@
   ],
   "layer_span": 1.0,
   "files": [
+    "Tail/Layer_003.png",
     "Tail/Layer_004.png",
     "Tail/Layer_005.png",
     "Tail/Layer_006.png",
@@ -36,6 +38,7 @@
     "Tail/Layer_016.png"
   ],
   "albedo_files": [
+    "Tail/Albedo/Layer_003.png",
     "Tail/Albedo/Layer_004.png",
     "Tail/Albedo/Layer_005.png",
     "Tail/Albedo/Layer_006.png",
@@ -51,6 +54,7 @@
     "Tail/Albedo/Layer_016.png"
   ],
   "normal_files": [
+    "Tail/Normal/Layer_003.png",
     "Tail/Normal/Layer_004.png",
     "Tail/Normal/Layer_005.png",
     "Tail/Normal/Layer_006.png",
@@ -66,6 +70,7 @@
     "Tail/Normal/Layer_016.png"
   ],
   "layer_height_px": [
+    18.6615,
     24.882,
     31.1025,
     37.323,
@@ -105,11 +110,11 @@
     "tail": {
       "centre": [
         0.0,
-        70.0,
+        67.0,
         148.0
       ],
       "rx": 26.0,
-      "ry": 30.0,
+      "ry": 33.0,
       "rz": 27.0,
       "tilt_deg": -20.0
     }

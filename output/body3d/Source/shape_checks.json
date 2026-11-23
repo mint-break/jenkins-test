@@ -1,35 +1,35 @@
 {
   "outline_error_px": {
     "front": {
-      "rows": 36,
-      "mean_px": 2.0538134579670793,
-      "p95_px": 3.803927730301654,
-      "max_px": 3.9729101270630167
+      "rows": 56,
+      "mean_px": 1.9721001162508962,
+      "p95_px": 3.8409369697879194,
+      "max_px": 4.020892052923273
     },
     "back": {
-      "rows": 43,
-      "mean_px": 0.8915153118460181,
-      "p95_px": 2.0297080851241844,
-      "max_px": 2.0606872012065764
+      "rows": 63,
+      "mean_px": 0.9096537469657092,
+      "p95_px": 2.0486407378112403,
+      "max_px": 2.8309919271163437
     },
     "side": {
-      "rows": 227,
-      "mean_px": 1.2726033321161911,
-      "p95_px": 2.9253012610589764,
+      "rows": 247,
+      "mean_px": 1.2259837503674955,
+      "p95_px": 2.920776973208227,
       "max_px": 4.138869184609291
     }
   },
   "estimated_parts_deviation_px": {
     "front_incl_crown_and_base": {
       "rows": 151,
-      "mean_px": 3.8363088852075493,
-      "p95_px": 8.991914564577547,
-      "max_px": 11.051170294387404
+      "mean_px": 3.2718787407002554,
+      "p95_px": 8.367427829814051,
+      "max_px": 10.458362350429212
     },
     "side_incl_crown_and_base": {
       "rows": 299,
-      "mean_px": 1.829874584541391,
-      "p95_px": 5.797130432083391,
+      "mean_px": 1.7095880494094466,
+      "p95_px": 5.376878999919722,
       "max_px": 16.409123011184583
     }
   },
@@ -37,43 +37,43 @@
     "width": {
       "curvature_spikes": 0,
       "curvature_sign_changes": 0,
-      "max_slope": 11.93052442697093
+      "max_slope": 13.819341839489374
     },
     "depth_front": {
       "curvature_spikes": 0,
       "curvature_sign_changes": 0,
-      "max_slope": 10.229200121681757
+      "max_slope": 10.804676491401585
     },
     "depth_back": {
       "curvature_spikes": 0,
       "curvature_sign_changes": 0,
-      "max_slope": 10.444049952842626
+      "max_slope": 11.27418207864159
     }
   },
   "layer_steps_64": {
     "width": {
       "layer_spacing_px": 5.18375,
-      "wall_max_step_px": 4.999172226887964,
-      "wall_max_step_in_layer_spacings": 0.9643930025344517,
-      "wall_layers": 48,
-      "cap_max_step_px": 28.003768528160904,
-      "cap_layers": 15
+      "wall_max_step_px": 4.7850524297078465,
+      "wall_max_step_in_layer_spacings": 0.9230870373200573,
+      "wall_layers": 49,
+      "cap_max_step_px": 31.65543595563785,
+      "cap_layers": 14
     },
     "depth_front": {
       "layer_spacing_px": 5.18375,
       "wall_max_step_px": 4.967170446584674,
       "wall_max_step_in_layer_spacings": 0.9582195218875669,
-      "wall_layers": 49,
-      "cap_max_step_px": 24.09282476029056,
-      "cap_layers": 14
+      "wall_layers": 50,
+      "cap_max_step_px": 25.190652493546253,
+      "cap_layers": 13
     },
     "depth_back": {
       "layer_spacing_px": 5.18375,
-      "wall_max_step_px": 4.758424878814026,
-      "wall_max_step_in_layer_spacings": 0.917950302158481,
-      "wall_layers": 50,
-      "cap_max_step_px": 24.597786210855467,
-      "cap_layers": 13
+      "wall_max_step_px": 4.669685459453234,
+      "wall_max_step_in_layer_spacings": 0.9008315330510218,
+      "wall_layers": 51,
+      "cap_max_step_px": 26.18543320910159,
+      "cap_layers": 12
     }
   },
   "symmetry": {

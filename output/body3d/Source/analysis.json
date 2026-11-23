@@ -42,18 +42,18 @@
       189
     ],
     "width_measured_h": [
-      77.8,
+      57.7,
       247.68
     ],
     "depth_measured_h": [
-      77.8,
+      57.7,
       304.0
     ],
     "back_front_depth_ratio_at_tail": 1.0298511618840762
   },
   "estimated": [
     "head top (gentle crown): width measured up to h=248px, depth up to h=304px (the leaf overlaps the back of the head in the side view); above that, slope-matched ellipses rise gently to a broad crown at h=350px",
-    "body bottom: rounded from h=78px down to h=18px (feet cover it; the end height is the body's lower outline seen between the feet)",
+    "body bottom: rounded from h=58px down to h=18px (feet cover it; the end height is the body's lower outline seen between the feet)",
     "sides behind the arms: spline bridged between the measured rows above and below the arms",
     "back behind the tail: front edge x 1.03 (back/front ratio just above the tail)",
     "left/right symmetry: front and back edges on both sides averaged into one width",
