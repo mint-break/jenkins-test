@@ -43,10 +43,12 @@ class ArmParams:
     side_back: tuple = (-3.5, 2.5, 6.5, 8.5)
     tip_h: float = 92.0          # lowest point of the arm (front 98, side 86)
     tip_round: float = 20.0
-    top_h: float = 212.0         # upper end, inside the body (hidden)
+    top_h: float = 215.0         # upper end, inside the body (hidden)
     top_round: float = 14.0
-    blend_from: float = 165.0    # start of the shoulder taper
-    sink: float = 22.0           # how far the arm centre moves into the body at the top
+    merge_front: float = 118.0   # height where the arm's front edge starts sinking into the body
+    merge_back: float = 158.0    # ... and the back edge (side view: 125 / 162)
+    merge_len: float = 45.0
+    sink: float = 34.0           # how far the arm centre moves into the body
 
 
 @dataclass
@@ -84,13 +86,6 @@ class Limbs:
         rx = np.clip(self.rx(np.clip(h, a.front_h[0], a.front_h[-1])), 18, None)
         zc = np.interp(h, *self._zc)
         rz = np.interp(h, *self._rz)
-        # shoulder: above the measured outline the arm tapers and sinks into the body,
-        # so it meets the shoulder smoothly instead of ending in a ledge
-        t = smoothstep(a.blend_from, a.top_h - a.top_round, h)
-        rz = rz * (1 - 0.55 * t)
-        rx = rx * (1 - 0.30 * t)
-        xc = xc - a.sink * t
-        zc = zc + (0 - zc) * 0.6 * t
         # rounded ends
         lo = a.tip_h + a.tip_round
         s_lo = np.sqrt(np.clip(1 - ((lo - h) / a.tip_round) ** 2, 0, 1))
@@ -102,7 +97,16 @@ class Limbs:
         return xc, zc, rx * s, rz * s
 
     def F_arm(self, X, Y, Z, side=+1):
+        a = self.arm
         xc, zc, rx, rz = self.arm_profiles(Y)
+        # shoulder: the arm sinks into the body along a SLANTED line, as in the side
+        # view (the front edge merges at h~125, the back edge at h~165)
+        zf, zb = a.side_front[-1], a.side_back[-1]
+        u = np.clip((Z - zf) / (zb - zf), 0, 1)
+        h0 = a.merge_front + (a.merge_back - a.merge_front) * u
+        t = smoothstep(h0, h0 + a.merge_len, Y)
+        xc = xc - a.sink * t
+        rx = rx * (1 - 0.35 * t)
         rx = np.maximum(rx, 1e-3)
         rz = np.maximum(rz, 1e-3)
         q = np.sqrt(((side * X - xc) / rx) ** 2 + ((Z - zc) / rz) ** 2)
@@ -131,14 +135,15 @@ class Limbs:
             fl = np.minimum(self.F_foot(X, Y, Z, +1), self.F_foot(X, Y, Z, -1))
         if self.body is None or self.fillet <= 0:
             return fl
-        # smooth union with the body, kept only near the limb: the part also draws the
-        # fillet that rounds the joint (body-coloured), so no sharp crease line appears
+        # smooth union with the body, keeping ONLY the fillet volume: outside the body
+        # (deeper than 1 px inside is excluded) and only where the blend is active
+        # (fl < fb + k). The part thus adds the rounded joint and nothing of the body.
         k = self.fillet
         fb = self.body_dist(X, Y, Z)
         hh = np.clip(0.5 + 0.5 * (fb - fl) / k, 0, 1)
         sm = fb * (1 - hh) + fl * hh - k * hh * (1 - hh)
-        near = fl < k * 1.5
-        return np.where(near & (sm < fl), np.maximum(sm, fl - k), fl)
+        fillet = np.maximum(np.maximum(sm, -fb - 1.0), fl - fb - k)
+        return np.minimum(fl, fillet)
 
     def grad(self, X, Y, Z, which, e=0.5):
         g = [(self.F(X + e * (k == 0), Y + e * (k == 1), Z + e * (k == 2), which)
@@ -154,7 +159,7 @@ class Limbs:
         return 0.0, f.centre[1] + f.ry_up
 
 
-def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, crease=0.10):
+def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, crease=0.05):
     """Layers on the body grid covering the part. Returns indices, albedo, normal, baked."""
     n = size
     c = (n - 1) / 2
@@ -189,12 +194,19 @@ def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, cr
             d_top = np.clip(htop[m] - h, 0, None) * scale
             w = smoothstep(-3.0, 3.0, d_rim - d_top)[:, None]
             nrm = n_rim * (1 - w) + n_top[m] * w
+            # where the limb surface runs into the body surface, use the body's normal so the
+            # two coincident surfaces shade identically (no stripes in the merge zone)
+            if limbs.body is not None:
+                fbm = limbs.body_dist(X[m], Y[m], Z[m])
+                wb = smoothstep(8.0, 0.0, np.abs(fbm))[:, None]
+                nb = body_shape.grad(X[m], Y[m], Z[m])
+                nrm = nrm * (1 - wb) + nb * wb
             nrm /= np.linalg.norm(nrm, axis=-1, keepdims=True) + 1e-12
             hn = np.clip((h - body_shape.bottom) / H_body, 0, 1)
             base = np.asarray(pal["base"], np.float32) * (0.965 + 0.05 * hn)
             # soft shade in the fillet where the limb meets the body
             fb = limbs.body_dist(X[m], Y[m], Z[m]) if limbs.body is not None else np.full(m.sum(), 99.0)
-            cr = smoothstep(6.0, 0.0, fb) * crease
+            cr = smoothstep(6.0, 0.0, fb) * (fb > -0.5) * crease
             outline = np.asarray(pal["outline"], np.float32)
             col = base[None] * (1 - cr[:, None]) + outline[None] * cr[:, None]
             a8 = np.round(alpha[m] * 255).astype(np.uint8)
