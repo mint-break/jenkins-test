@@ -45,8 +45,8 @@ class ArmParams:
     tip_round: float = 20.0
     top_h: float = 212.0         # upper end, inside the body (hidden)
     top_round: float = 14.0
-    blend_from: float = 140.0    # start of the shoulder taper
-    sink: float = 28.0           # how far the arm centre moves into the body at the top
+    blend_from: float = 165.0    # start of the shoulder taper
+    sink: float = 22.0           # how far the arm centre moves into the body at the top
 
 
 @dataclass
@@ -61,7 +61,10 @@ class FootParams:
 class Limbs:
     """Implicit solids. F < 0 inside (approximately a distance in sheet px)."""
 
-    def __init__(self, arm: ArmParams | None = None, foot: FootParams | None = None):
+    def __init__(self, arm: ArmParams | None = None, foot: FootParams | None = None,
+                 body=None, fillet: float = 12.0):
+        self.body = body                   # BodyShape: arms/feet blend into it with a fillet
+        self.fillet = fillet
         self.arm = arm or ArmParams()
         self.foot = foot or FootParams()
         a = self.arm
@@ -113,10 +116,29 @@ class Limbs:
         d = (q - 1) * min(f.rx, f.ry_down, f.rz)
         return np.where(Y < 0, 1e3, d)                      # flat on the ground
 
+    def body_dist(self, X, Y, Z):
+        """Approximate signed distance to the body (sheet px)."""
+        b = self.body
+        f = b.F(X, Y, Z) + 1.0
+        r = np.minimum(b.w(Y), np.where(Z < 0, b.df(Y), b.db(Y)))
+        d = (np.power(np.maximum(f, 1e-9), 1.0 / b.p) - 1) * np.maximum(r, 1.0)
+        return np.where((Y < b.bottom) | (Y > b.top), 1e3, d)
+
     def F(self, X, Y, Z, which):
         if which == "Arms":
-            return np.minimum(self.F_arm(X, Y, Z, +1), self.F_arm(X, Y, Z, -1))
-        return np.minimum(self.F_foot(X, Y, Z, +1), self.F_foot(X, Y, Z, -1))
+            fl = np.minimum(self.F_arm(X, Y, Z, +1), self.F_arm(X, Y, Z, -1))
+        else:
+            fl = np.minimum(self.F_foot(X, Y, Z, +1), self.F_foot(X, Y, Z, -1))
+        if self.body is None or self.fillet <= 0:
+            return fl
+        # smooth union with the body, kept only near the limb: the part also draws the
+        # fillet that rounds the joint (body-coloured), so no sharp crease line appears
+        k = self.fillet
+        fb = self.body_dist(X, Y, Z)
+        hh = np.clip(0.5 + 0.5 * (fb - fl) / k, 0, 1)
+        sm = fb * (1 - hh) + fl * hh - k * hh * (1 - hh)
+        near = fl < k * 1.5
+        return np.where(near & (sm < fl), np.maximum(sm, fl - k), fl)
 
     def grad(self, X, Y, Z, which, e=0.5):
         g = [(self.F(X + e * (k == 0), Y + e * (k == 1), Z + e * (k == 2), which)
@@ -132,7 +154,7 @@ class Limbs:
         return 0.0, f.centre[1] + f.ry_up
 
 
-def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, crease=0.12):
+def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, crease=0.10):
     """Layers on the body grid covering the part. Returns indices, albedo, normal, baked."""
     n = size
     c = (n - 1) / 2
@@ -170,9 +192,9 @@ def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, cr
             nrm /= np.linalg.norm(nrm, axis=-1, keepdims=True) + 1e-12
             hn = np.clip((h - body_shape.bottom) / H_body, 0, 1)
             base = np.asarray(pal["base"], np.float32) * (0.965 + 0.05 * hn)
-            # crease where the limb meets the body (the art draws a line there)
-            fb = body_shape.F(X[m], Y[m], Z[m]) + 1.0          # body superellipse value (1 = surface)
-            cr = smoothstep(1.12, 1.0, fb) * crease
+            # soft shade in the fillet where the limb meets the body
+            fb = limbs.body_dist(X[m], Y[m], Z[m]) if limbs.body is not None else np.full(m.sum(), 99.0)
+            cr = smoothstep(6.0, 0.0, fb) * crease
             outline = np.asarray(pal["outline"], np.float32)
             col = base[None] * (1 - cr[:, None]) + outline[None] * cr[:, None]
             a8 = np.round(alpha[m] * 255).astype(np.uint8)
@@ -204,7 +226,7 @@ def export_limbs(out_dir, body_shape, limbs: Limbs | None = None):
     size = body_cfg["image"]["width"]
     dh = sp / scale
     pal = {k: np.array(v, float) for k, v in body_cfg["lighting"]["palette_rgb"].items()}
-    limbs = limbs or Limbs()
+    limbs = limbs or Limbs(body=body_shape)
     cfgs = []
     for which in ("Arms", "Feet"):
         d = os.path.join(out_dir, "Limbs", which)

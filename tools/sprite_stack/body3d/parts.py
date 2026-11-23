@@ -300,7 +300,7 @@ def main(argv=None):
     from . import limbs
     if "limbs" in todo:
         shape, mF, mS = face.build_shape(views)
-        lim = limbs.Limbs()
+        lim = limbs.Limbs(body=shape)
         cfgs += limbs.export_limbs(a.out, shape, lim)
         limbs.ortho_check(lim, shape, views, mF, mS, os.path.join(a.out, "Preview", "limbs_vs_art.png"))
     elif os.path.exists(os.path.join(a.out, "Limbs", "Arms", "stack_config.json")):
