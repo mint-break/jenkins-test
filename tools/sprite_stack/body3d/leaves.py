@@ -35,11 +35,15 @@ class LeafParams:
     base: tuple = (1.5, 355.0, 3.0)        # right leaf (mirrored for the left): both blades start at
                                            # the top of ONE shared stem, ~5 px above the crown (349.8)
     tip: tuple = (150.0, 436.0, 108.0)
-    width: float = 113.0                   # true max width (sheet px)
+    width: float = 125.0                   # true max width (sheet px): 113 seen from the front + the fold
     roll_deg: float = 80.0
     bend: float = 0.05                     # midrib bend (fraction of length) towards the upper face
     cup: float = 0.10                      # blade edges rise (fraction of half width)
-    thickness: float = 12.0
+    thickness: float = 8.0
+    roll_tip_deg: float | None = 60.0   # twist: roll at the tip (None = no twist)
+    fold_deg: float = 25.0       # V fold of the two halves about the midrib (0 = flat)
+    fan_deg: float = 8.0         # right leaf turned about the vertical (deg, + = tip forward)
+    fan_deg_left: float = 3.0    # left leaf (mirror) turned the other way by this much
     serration: float = 0.035
     serration_count: int = 11
     # width profile along the midrib (u = 0 base .. 1 tip), from the front view
@@ -84,15 +88,32 @@ def sample(p: LeafParams, side: int = +1, nu=900, ns=360):
     s = np.linspace(-1, 1, ns)
     U, Sg = np.meshgrid(u, s, indexing="ij")
     hw = halfwidth(p, U)
+    # twist: the blade's roll goes from roll_deg at the base to roll_tip_deg at the tip
+    # (upright at the stem as the front view shows, lying back towards the tip as the
+    # top view shows)
+    rt = p.roll_deg if p.roll_tip_deg is None else p.roll_tip_deg
+    e1 = np.cross(d, [0.0, 1.0, 0.0])
+    e1 /= np.linalg.norm(e1)
+    e2 = np.cross(d, e1)
+    phi = np.radians(p.roll_deg + (rt - p.roll_deg) * np.clip(U, 0, 1) ** 1.2)
+    w_u = np.cos(phi)[..., None] * e1 + np.sin(phi)[..., None] * e2
+    n_u = np.cross(d, w_u)
+    sgn = np.sign(n_u[..., 1:2] + 1e-9)
+    w_u, n_u = w_u * sgn, n_u * sgn
     mid = B + np.outer(U.ravel() * L, d).reshape(U.shape + (3,)) \
-        + (p.bend * L * U ** 2)[..., None] * n
-    P = mid + (Sg * hw)[..., None] * w + (p.cup * hw * Sg ** 2)[..., None] * n
+        + (p.bend * L * U ** 2)[..., None] * n_u
+    # V fold along the midrib (rounded at the vein): a folded blade is never edge-on
+    # from every side at once, so it never collapses to a line while it turns
+    e = 0.12
+    fold = (np.sqrt(Sg ** 2 + e * e) - e) / (np.sqrt(1 + e * e) - e)
+    P = mid + (Sg * hw * math.cos(math.radians(p.fold_deg)))[..., None] * w_u \
+        + (hw * fold * math.sin(math.radians(p.fold_deg)) + p.cup * hw * Sg ** 2)[..., None] * n_u
     # surface normal from the parametric derivatives
     dPu = np.gradient(P, axis=0)
     dPs = np.gradient(P, axis=1)
     N = np.cross(dPu, dPs)
     N /= np.linalg.norm(N, axis=-1, keepdims=True) + 1e-12
-    N *= np.sign(np.sum(N * n, -1, keepdims=True) + 1e-12)        # align with the upper face
+    N *= np.sign(np.sum(N * n_u, -1, keepdims=True) + 1e-12)      # align with the upper face
     valid = hw > 0.3
     col = _albedo(p, U, Sg)
     out_pos, out_nrm, out_col = [], [], []
@@ -113,6 +134,15 @@ def sample(p: LeafParams, side: int = +1, nu=900, ns=360):
     if side < 0:
         pos = pos * np.array([-1, 1, 1])
         nrm = nrm * np.array([-1, 1, 1])
+    # fan: turn each leaf about the vertical through the shared stem, the two by
+    # different amounts, so in the side view the two blades separate and overlap
+    # (as in the art) instead of lying exactly on top of each other
+    a = math.radians(p.fan_deg if side > 0 else -p.fan_deg_left)
+    ca, sa = math.cos(a), math.sin(a)
+    rot = np.array([[ca, 0, sa], [0, 1, 0], [-sa, 0, ca]])
+    piv = np.array([0.0, p.base[1], p.base[2]])
+    pos = (pos - piv) @ rot.T + piv
+    nrm = nrm @ rot.T
     return {"pos": pos, "nrm": nrm, "col": colr}
 
 

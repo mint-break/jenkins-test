@@ -213,3 +213,120 @@ def band_energy(frame: Image.Image, spacing_px: float):
     m = nd.binary_erosion(body, iterations=int(round(2 * sig)))
     hp = (lum - smooth)[m]
     return {"rms": float(np.sqrt(np.mean(hp ** 2))), "p99": float(np.percentile(np.abs(hp), 99))}
+
+
+# ------------------------------------------------------------------ whole character
+
+def _tone_baked_layer(normal_rgba, h01, pal, two_sided):
+    """Rotation-invariant top light (stack.shade_top) from a layer-space normal map,
+    as a multiplier relative to the palette base."""
+    n = normal_rgba[..., :3].astype(np.float32) / 255 * 2 - 1
+    nm = np.stack([n[..., 0], n[..., 2], n[..., 1]], -1)           # model space (x, up, z)
+    if two_sided:
+        nm[..., 1] = np.abs(nm[..., 1])
+    return shade_top(nm, h01, pal) / np.maximum(np.asarray(pal["base"], np.float32), 1)
+
+
+def char_frame(body, others, spacing, yaw, pal, squash=0.75, out_scale=1.0, mode="lit",
+               lift_scale=1.0, copies=8, outline=(38, 107, 81), outline_px=3):
+    """Whole character. body = dict(albedo, normal (extended), sdf, index0) drawn with
+    layer interpolation; others = items as parts.load_items gives them (plain layers).
+    mode 'lit' (screen-fixed light) or 'baked' (top light, rotation invariant).
+    Every drawn copy of every part is sorted by height (ties: Body first, then list order)."""
+    from . import lit
+    n0 = body["albedo"][0].shape[0]
+    S = int(round(n0 * out_scale))
+    sq = max(1, int(round(S * squash)))
+    lift = spacing * out_scale * lift_scale
+    L = len(body["albedo"])
+    i0 = body.get("index0", 0)
+    top = max([i0 + L] + [it["index"] + it["span"] for it in others])
+    low = min([0.0, i0] + [it["index"] for it in others])
+    Hc = int(math.ceil(sq + lift * (top - low))) + 12
+    canvas = np.zeros((Hc, S, 4), np.float32)
+    base_y = Hc - 6 - sq
+    c, s = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+    cb, sb = math.cos(math.radians(-yaw)), math.sin(math.radians(-yaw))
+    P = [_prep(body["albedo"][i], body["normal"][i], body["sdf"][i], yaw, S, sq) for i in range(L)]
+
+    def body_layer(h):
+        x = h - i0 + 0.5 / copies - 0.5
+        j = int(math.floor(x))
+        t = x - j
+        if j < 0:
+            j, t = 0, 0.0
+        if j >= L - 1:
+            j, t = L - 1, 0.0
+        A, B = P[j], P[min(j + 1, L - 1)]
+        d = (1 - t) * A["d"] + t * B["d"]
+        cov = np.clip(0.5 + d, 0, 1)
+        if cov.max() <= 0:
+            return None
+        hasA = np.linalg.norm(A["N"], axis=-1, keepdims=True) > 0.5
+        hasB = np.linalg.norm(B["N"], axis=-1, keepdims=True) > 0.5
+        N = (1 - t) * np.where(hasA, A["N"], B["N"]) + t * np.where(hasB, B["N"], A["N"])
+        N /= np.linalg.norm(N, axis=-1, keepdims=True) + 1e-9
+        rgb = (1 - t) * A["rgb"] + t * B["rgb"]
+        h01 = (j + t + 0.5) / L
+        if mode == "lit":
+            tone = lit.shade(N, h01, pal, squash)
+        else:
+            nx = N[..., 0] * cb - N[..., 1] * sb
+            ny = N[..., 0] * sb + N[..., 1] * cb
+            tone = shade_top(np.stack([nx, N[..., 2], ny], -1), h01, pal) / np.maximum(np.asarray(pal["base"], np.float32), 1)
+        col = np.clip(rgb * tone, 0, 1)
+        return np.concatenate([col * cov[..., None], cov[..., None]], -1)
+
+    def tr(ch):
+        im = Image.fromarray(_f(ch), "F").resize((S, S), Image.BILINEAR).rotate(yaw, resample=Image.BILINEAR)
+        return np.asarray(im.resize((S, sq), Image.BILINEAR))
+
+    cache = {}
+
+    def other_layer(j):
+        if j in cache:
+            return cache[j]
+        it = others[j]
+        A = it["albedo"]
+        a = A[..., 3] / 255.0
+        if mode == "baked":
+            tone0 = _tone_baked_layer(it["normal"], it["h01"], pal, it.get("two_sided", False))
+            prem = [tr(A[..., k] / 255.0 * a * tone0[..., k]) for k in range(3)]
+            layer = np.concatenate([np.clip(np.stack(prem, -1), 0, 1), tr(a)[..., None]], -1)
+        else:
+            aa = tr(a)
+            rgb = np.stack([tr(A[..., k] / 255.0 * a) for k in range(3)], -1)
+            nv = [tr(it["normal"][..., k] / 255.0 * 2 - 1) for k in range(3)]
+            N = np.stack([nv[0] * c - nv[1] * s, nv[0] * s + nv[1] * c, nv[2]], -1)
+            N /= np.linalg.norm(N, axis=-1, keepdims=True) + 1e-9
+            ts = (aa > 0) if it.get("two_sided") else None
+            tone = lit.shade(N, it["h01"], pal, squash, two_sided=ts, gloss_scale=it.get("gloss", 1.0))
+            layer = np.concatenate([np.clip(rgb * tone, 0, 1), aa[..., None]], -1)
+        cache[j] = layer
+        return layer
+
+    draws = [(round(i0 + k / copies, 6), 0, "b", k) for k in range(L * copies)]
+    for j, it in enumerate(others):
+        if it["albedo"][..., 3].max() == 0:
+            continue
+        n = max(1, int(round(it["span"] * copies)))
+        for k in range(n):
+            draws.append((round(it["index"] + it["span"] * k / n, 6), 1 + j, "o", j))
+    draws.sort(key=lambda t: (t[0], t[1]))
+    for h, _, kind, ref in draws:
+        layer = body_layer(h) if kind == "b" else other_layer(ref)
+        if layer is None:
+            continue
+        y = int(round(base_y - (h - low) * lift))
+        y0, y1 = max(y, 0), min(y + sq, Hc)
+        if y1 > y0:
+            src = layer[y0 - y:y1 - y]
+            canvas[y0:y1] = src + canvas[y0:y1] * (1 - src[..., 3:4])
+    rgbo = np.divide(canvas[..., :3], canvas[..., 3:4], out=np.zeros_like(canvas[..., :3]),
+                     where=canvas[..., 3:4] > 1e-4)
+    img = np.round(np.clip(np.concatenate([rgbo, canvas[..., 3:4]], -1), 0, 1) * 255).astype(np.uint8)
+    if outline is not None:
+        m = nd.binary_fill_holes(img[..., 3] > 110)
+        ring = nd.binary_dilation(m, iterations=outline_px) & ~m
+        img[ring] = list(outline) + [255]
+    return Image.fromarray(img), len(draws)

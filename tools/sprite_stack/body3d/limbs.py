@@ -57,16 +57,17 @@ class FootParams:
     rx: float = 50.0
     rz: float = 60.5
     ry_down: float = 17.0
-    ry_up: float = 26.0
+    ry_up: float = 32.0
+    bottom_exp: float = 3.0      # >2 = flatter sole (front/side rows near the ground: 0.41 / 0.8 / 0.95)
 
 
 @dataclass
 class TailParams:
     # side view: protrudes from the back h=33..100, back edge up to z=175 at h~80;
     # back view: a round outline 52 px wide around h=37..85 on the centre line
-    centre: tuple = (0.0, 70.0, 148.0)
+    centre: tuple = (0.0, 67.0, 148.0)
     rx: float = 26.0
-    ry: float = 30.0
+    ry: float = 33.0
     rz: float = 27.0
     tilt_deg: float = -20.0       # top leans back, as the side view's teardrop
 
@@ -128,8 +129,11 @@ class Limbs:
         f = self.foot
         cx, cy, cz = f.centre
         ry = np.where(Y < cy, f.ry_down, f.ry_up)
-        q = np.sqrt(((side * X - cx) / f.rx) ** 2 + ((Y - cy) / ry) ** 2 + ((Z - cz) / f.rz) ** 2)
-        d = (q - 1) * min(f.rx, f.ry_down, f.rz)
+        ex = np.where(Y < cy, f.bottom_exp, 2.0)
+        r_h = np.sqrt(((side * X - cx) / f.rx) ** 2 + ((Z - cz) / f.rz) ** 2)
+        lim = np.sqrt(np.clip(1 - np.abs((Y - cy) / ry) ** ex, 0, 1))
+        d = (r_h - lim) * min(f.rx, f.rz)
+        d = np.where(np.abs((Y - cy) / ry) > 1, np.maximum(d, (np.abs(Y - cy) - ry)), d)
         return np.where(Y < 0, 1e3, d)                      # flat on the ground
 
     def body_dist(self, X, Y, Z):

@@ -123,8 +123,9 @@ figcaption { font-size: 12px; color: var(--muted); }
         </div>
         <div class="checks">
           <label><input type="checkbox" id="stackSpin" checked> 自動で回す</label>
+          <label><input type="checkbox" id="interp" checked> 胴体の層を補間する（オフで修正前の描き方）</label>
         </div>
-        <p class="note">層を回した角度だけ法線も回すので、光は常に画面の左上から当たります。焼き込み版は向きによらず同じ見え方ですが、立体感は弱くなります。</p>
+        <p class="note">層を回した角度だけ法線も回すので、光は常に画面の左上から当たります。焼き込み（真上の光）は同じ法線から計算し、向きによらず同じ見え方です。「補間」をオフにすると修正前の描き方（層ごとに同じ断面を重ねる）と比べられます。</p>
       </aside>
     </div>
   </section>
@@ -381,13 +382,19 @@ async function stackViewer() {
     t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; res(t);
   }, undefined, rej));
   const draw = ch.draw;
-  let tex;
+  const bodyIdx = draw.map((e, j) => e.part === "Body" ? j : -1).filter(j => j >= 0);
+  const pad = (i) => String(i).padStart(3, "0");
+  let tex, bodyExt, bodySdf;
   try {
-    tex = await Promise.all(draw.map(e => Promise.all([load(e.albedo, true), load(e.normal, false), load(e.part === "Body" ? e.baked : e.albedo, true)])));
+    [tex, bodyExt, bodySdf] = await Promise.all([
+      Promise.all(draw.map(e => Promise.all([load(e.albedo, true), load(e.part === "Body" ? e.normal.replace("/Normal/", "/NormalExt/") : e.normal, false)]))),
+      Promise.all(bodyIdx.map((_, i) => load(`Body/NormalExt/Layer_${pad(i)}.png`, false))),
+      Promise.all(bodyIdx.map((_, i) => load(`Body/SDF/Layer_${pad(i)}.png`, false))),
+    ]);
   } catch (e) { badge.textContent = "層の画像を読み込めませんでした"; return; }
   const v3 = (c) => new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255);
   const uni = {
-    uYaw: { value: 0 }, uSquash: { value: 0.75 }, uLit: { value: 1 },
+    uYaw: { value: 0 }, uSquash: { value: 0.75 }, uLit: { value: 1 }, uInterp: { value: 1 },
     uShadow: { value: v3(pal.shadow) }, uBase: { value: v3(pal.base) }, uLight: { value: v3(pal.light) }, uGloss: { value: v3(pal.gloss) },
     uL: { value: new THREE.Vector3(...P.light_dir).normalize() },
     uP1: { value: new THREE.Vector4(P.base_from, P.base_to, P.light_from, P.light_to) },
@@ -395,49 +402,88 @@ async function stackViewer() {
     uP3: { value: new THREE.Vector2(P.gloss_min_height, P.gloss_full_height) },
   };
   const vs = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`;
+  // one shader for every layer. Body copies may interpolate between two layers (outline from the
+  // signed distance in Body/SDF, normals from Body/NormalExt); 'baked' = rotation-invariant top light
+  // computed from the same normals (as stack.shade_top), so no baked PNGs are needed here.
   const fs = `
-    uniform sampler2D tAlb, tNor, tBak; uniform float uYaw, uSquash, uLit, uH, uTwo, uGs;
+    uniform sampler2D tA, tN, tA0, tA1, tN0, tN1, tS0, tS1;
+    uniform float uYaw, uSquash, uLit, uH, uTwo, uGs, uBody, uInterp, uT;
     uniform vec3 uShadow, uBase, uLight, uGloss, uL; uniform vec4 uP1, uP2; uniform vec2 uP3;
     varying vec2 vUv;
+    vec3 straight(vec4 c) { return c.a > 0.004 ? c.rgb / c.a : vec3(0.0); }
+    float sdf(sampler2D t) { float q = (texture2D(t, vUv).r * 255.0 - 128.0) / 127.0; return sign(q) * 48.0 * q * q; }
     void main(){
-      vec4 al = texture2D(tAlb, vUv);
-      if (uLit < 0.5) { gl_FragColor = texture2D(tBak, vUv); return; }   // already premultiplied
-      vec3 n = texture2D(tNor, vUv).rgb * 2.0 - 1.0;
-      float c = cos(uYaw), s = sin(uYaw);
-      n.xy = vec2(n.x * c - n.y * s, n.x * s + n.y * c); n = normalize(n);
-      float pitch = asin(clamp(uSquash, 0.0, 1.0)); vec3 V = vec3(0.0, -cos(pitch), sin(pitch));
-      if (uTwo > 0.5 && dot(n, V) < 0.0) n = -n;
-      float d = dot(n, uL);
-      vec3 col = mix(uShadow, uBase, smoothstep(uP1.x, uP1.y, d));
-      col = mix(col, uLight, smoothstep(uP1.z, uP1.w, d));
-      float g = smoothstep(uP2.x, uP2.y, dot(n, normalize(uL + V))) * smoothstep(uP3.x, uP3.y, uH);
-      col = mix(col, uGloss, uP2.z * uGs * g);
-      col *= 1.0 - uP2.w * smoothstep(0.35, 0.0, clamp(dot(n, V), 0.0, 1.0));
-      vec3 rgb = al.rgb * col / max(uBase, vec3(0.001));      // al.rgb is premultiplied
-      gl_FragColor = vec4(rgb, al.a);
+      vec4 own = texture2D(tA, vUv);
+      vec3 alb = straight(own); vec3 n = texture2D(tN, vUv).rgb * 2.0 - 1.0; float cov = own.a;
+      if (uBody > 0.5 && uInterp > 0.5) {
+        float d = mix(sdf(tS0), sdf(tS1), uT);
+        float w = max(fwidth(d), 1e-3);
+        cov = clamp(0.5 + d / w, 0.0, 1.0);
+        if (cov <= 0.0) discard;
+        vec4 a0 = texture2D(tA0, vUv), a1 = texture2D(tA1, vUv);
+        vec3 c0 = a0.a > 0.004 ? straight(a0) : straight(a1), c1 = a1.a > 0.004 ? straight(a1) : straight(a0);
+        alb = (a0.a + a1.a) > 0.004 ? mix(c0, c1, uT) : uBase;
+        n = mix(texture2D(tN0, vUv).rgb * 2.0 - 1.0, texture2D(tN1, vUv).rgb * 2.0 - 1.0, uT);
+      }
+      if (cov <= 0.0) discard;
+      n = normalize(n);
+      vec3 tone;
+      if (uLit < 0.5) {
+        float up = uTwo > 0.5 ? abs(n.z) : n.z;
+        vec3 col = mix(uShadow, uBase, smoothstep(-0.75, -0.05, up));
+        col = mix(col, uLight, smoothstep(0.15, 0.95, up));
+        tone = col / max(uBase, vec3(0.001));
+      } else {
+        float c = cos(uYaw), s = sin(uYaw);
+        n.xy = vec2(n.x * c - n.y * s, n.x * s + n.y * c);
+        float pitch = asin(clamp(uSquash, 0.0, 1.0)); vec3 V = vec3(0.0, -cos(pitch), sin(pitch));
+        if (uTwo > 0.5 && dot(n, V) < 0.0) n = -n;
+        float d = dot(n, uL);
+        vec3 col = mix(uShadow, uBase, smoothstep(uP1.x, uP1.y, d));
+        col = mix(col, uLight, smoothstep(uP1.z, uP1.w, d));
+        float g = smoothstep(uP2.x, uP2.y, dot(n, normalize(uL + V))) * smoothstep(uP3.x, uP3.y, uH);
+        col = mix(col, uGloss, uP2.z * uGs * g);
+        col *= 1.0 - uP2.w * smoothstep(0.35, 0.0, clamp(dot(n, V), 0.0, 1.0));
+        tone = col / max(uBase, vec3(0.001));
+      }
+      gl_FragColor = vec4(alb * tone * cov, cov);
     }`;
   const stage = document.getElementById("stackStage");
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, premultipliedAlpha: true });
   renderer.setPixelRatio(window.devicePixelRatio || 1);
   stage.prepend(renderer.domElement);
   const scene = new THREE.Scene();
-  const size = cfg.image.width, cpl = ch.copies_per_layer || 8, copies = cpl;
+  const size = cfg.image.width, cpl = ch.copies_per_layer || 8;
   const geo = new THREE.PlaneGeometry(size, size);
   const holders = [], quads = [];
-  let order = 0;
+  const mk = (u) => new THREE.ShaderMaterial({
+    uniforms: { ...uni, ...u }, vertexShader: vs, fragmentShader: fs, transparent: true, depthTest: false, depthWrite: false,
+    extensions: { derivatives: true },
+    blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+  });
   draw.forEach((e, j) => {
     const part = ch.parts[e.part];
-    const mat = new THREE.ShaderMaterial({
-      uniforms: { ...uni, tAlb: { value: tex[j][0] }, tNor: { value: tex[j][1] }, tBak: { value: tex[j][2] },
-                  uH: { value: (e.index + 0.5) / ch.height01_divisor },
-                  uTwo: { value: part.two_sided ? 1 : 0 }, uGs: { value: part.gloss_scale } },
-      vertexShader: vs, fragmentShader: fs, transparent: true, depthTest: false, depthWrite: false,
-      blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
-    });
+    const isBody = e.part === "Body";
+    const base = { tA: { value: tex[j][0] }, tN: { value: tex[j][1] }, uTwo: { value: part.two_sided ? 1 : 0 },
+                   uGs: { value: part.gloss_scale }, uBody: { value: isBody ? 1 : 0 } };
     const n = Math.max(1, Math.round(e.span * cpl));
+    const shared = isBody ? null : mk({ ...base, uH: { value: (e.index + 0.5 * e.span) / ch.height01_divisor },
+      tA0: { value: tex[j][0] }, tA1: { value: tex[j][0] }, tN0: { value: tex[j][1] }, tN1: { value: tex[j][1] },
+      tS0: { value: tex[j][1] }, tS1: { value: tex[j][1] }, uT: { value: 0 } });
     for (let k = 0; k < n; k++) {
-      const holder = new THREE.Object3D();          // squash after rotation, like the Unity builder
       const h = Math.round((e.index + e.span * k / n) * 1e6) / 1e6;
+      let mat = shared;
+      if (isBody) {
+        // between the centres of layers j0 and j0 + 1 (same rule as smooth_stack.py)
+        let x = h + 0.5 / cpl - 0.5, j0 = Math.floor(x), t = x - j0;
+        if (j0 < 0) { j0 = 0; t = 0; }
+        if (j0 >= L - 1) { j0 = L - 1; t = 0; }
+        const j1 = Math.min(j0 + 1, L - 1), b0 = bodyIdx[j0], b1 = bodyIdx[j1];
+        mat = mk({ ...base, uH: { value: (j0 + t + 0.5) / L }, uT: { value: t },
+          tA0: { value: tex[b0][0] }, tA1: { value: tex[b1][0] }, tN0: { value: bodyExt[j0] }, tN1: { value: bodyExt[j1] },
+          tS0: { value: bodySdf[j0] }, tS1: { value: bodySdf[j1] } });
+      }
+      const holder = new THREE.Object3D();          // squash after rotation, like the Unity builder
       holder.userData.lift = (h - (ch.min_index || 0)) * sp;
       const q = new THREE.Mesh(geo, mat);
       q.userData.sortKey = [h, j];
@@ -463,6 +509,7 @@ async function stackViewer() {
   window.addEventListener("resize", layout);
   document.getElementById("sq").addEventListener("input", (e) => { document.getElementById("sqOut").textContent = (+e.target.value).toFixed(2); layout(); });
   document.getElementById("stackSpin").addEventListener("change", (e) => { S.spin = e.target.checked; });
+  document.getElementById("interp").addEventListener("change", (e) => { uni.uInterp.value = e.target.checked ? 1 : 0; S.dirty = true; });
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { document.getElementById("stackSpin").checked = false; S.spin = false; }
   document.querySelectorAll("#modeSeg button").forEach(b => b.addEventListener("click", () => {
     document.querySelectorAll("#modeSeg button").forEach(x => x.setAttribute("aria-pressed", x === b));
@@ -479,7 +526,7 @@ async function stackViewer() {
       uni.uYaw.value = r;
       quads.forEach(q => { q.rotation.z = r; });
       renderer.render(scene, cam);
-      badge.textContent = `yaw ${((S.yaw % 360) + 360) % 360 | 0}° · ${draw.length} 層（胴体 ${L} · 葉 · 顔 · 腕 · 足 · しっぽ）· ${quads.length} 回描画`;
+      badge.textContent = `yaw ${((S.yaw % 360) + 360) % 360 | 0}° · ${draw.length} 層 · ${quads.length} 回描画`;
       S.dirty = false;
     }
     requestAnimationFrame(frame);

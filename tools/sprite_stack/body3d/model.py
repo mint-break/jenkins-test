@@ -209,7 +209,7 @@ class _RoundTop:
 
 def build(front: ViewMeasure, back: ViewMeasure, side: ViewMeasure, p: float,
           head_aspect: float = 1.0, smooth_px: float = 1.5, side_top_margin: float = 0.10,
-          base_round: float = 0.08, round_top: float = 0.0, width_top_margin: float = 0.28,
+          base_round: float = 0.02, round_top: float = 0.0, width_top_margin: float = 0.28,
           top_h: float = 0.0, top_above_leaf: float = 0.04) -> BodyShape:
     Hs = side.notes["leaf_base_h"] - side.notes["body_bottom_h"]
     # width: four edges (front L/R, back L/R) -> one symmetric profile

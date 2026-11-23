@@ -122,7 +122,7 @@ def lit_frame(albedo, normals, spacing, yaw, pal, squash=0.75, out_scale=0.5,
 
 
 def lit_items(items, spacing, yaw, pal, squash=0.75, out_scale=1.0, outline=(38, 107, 81), outline_px=2,
-              copies_per_layer=8):
+              copies_per_layer=8, mode="lit", lift_scale=1.0):
     """General stack renderer for several parts on one grid.
 
     items: dicts with albedo, normal (RGBA uint8), index (float, body-grid units),
@@ -133,7 +133,7 @@ def lit_items(items, spacing, yaw, pal, squash=0.75, out_scale=1.0, outline=(38,
     n0 = items[0]["albedo"].shape[0]
     S = int(round(n0 * out_scale))
     sq = max(1, int(round(S * squash)))
-    lift = spacing * out_scale
+    lift = spacing * out_scale * lift_scale
     top = max(it["index"] + it["span"] for it in items)
     low = min(0.0, min(it["index"] for it in items))
     Hc = int(math.ceil(sq + lift * (top - low))) + 12
@@ -144,7 +144,7 @@ def lit_items(items, spacing, yaw, pal, squash=0.75, out_scale=1.0, outline=(38,
                                   .resize((S, S), Image.BILINEAR))
     draws = []
     for j, it in enumerate(items):
-        A = it["albedo"]
+        A = it["baked"] if mode == "baked_files" else it["albedo"]
         if A[..., 3].max() == 0:
             continue
         a = _rot(small(A[..., 3] / 255.0), yaw)
@@ -153,7 +153,10 @@ def lit_items(items, spacing, yaw, pal, squash=0.75, out_scale=1.0, outline=(38,
         N = np.stack([nm[0] * c - nm[1] * s_, nm[0] * s_ + nm[1] * c, nm[2]], -1)
         N /= np.linalg.norm(N, axis=-1, keepdims=True) + 1e-9
         ts = (a > 0) if it.get("two_sided") else None
-        tone = shade(N, it["h01"], pal, squash, two_sided=ts, gloss_scale=it.get("gloss", 1.0))
+        if mode == "baked_files":
+            tone = np.ones(N.shape, np.float32)
+        else:
+            tone = shade(N, it["h01"], pal, squash, two_sided=ts, gloss_scale=it.get("gloss", 1.0))
         layer = np.concatenate([np.clip(np.stack(rgb, -1) * tone, 0, 1), a[..., None]], -1)
         layer = np.stack([np.asarray(Image.fromarray(np.ascontiguousarray(layer[..., k], np.float32), "F")
                                      .resize((S, sq), Image.BILINEAR)) for k in range(4)], -1)
