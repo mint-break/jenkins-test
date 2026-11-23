@@ -371,7 +371,7 @@ async function stackViewer() {
   const draw = ch.draw;
   let tex;
   try {
-    tex = await Promise.all(draw.map(e => Promise.all([load(e.albedo, true), load(e.normal, false), load(e.baked, true)])));
+    tex = await Promise.all(draw.map(e => Promise.all([load(e.albedo, true), load(e.normal, false), load(e.part === "Body" ? e.baked : e.albedo, true)])));
   } catch (e) { badge.textContent = "層の画像を読み込めませんでした"; return; }
   const v3 = (c) => new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255);
   const uni = {
