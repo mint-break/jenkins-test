@@ -45,6 +45,8 @@ class ArmParams:
     tip_round: float = 20.0
     top_h: float = 212.0         # upper end, inside the body (hidden)
     top_round: float = 14.0
+    blend_from: float = 140.0    # start of the shoulder taper
+    sink: float = 28.0           # how far the arm centre moves into the body at the top
 
 
 @dataclass
@@ -79,6 +81,13 @@ class Limbs:
         rx = np.clip(self.rx(np.clip(h, a.front_h[0], a.front_h[-1])), 18, None)
         zc = np.interp(h, *self._zc)
         rz = np.interp(h, *self._rz)
+        # shoulder: above the measured outline the arm tapers and sinks into the body,
+        # so it meets the shoulder smoothly instead of ending in a ledge
+        t = smoothstep(a.blend_from, a.top_h - a.top_round, h)
+        rz = rz * (1 - 0.55 * t)
+        rx = rx * (1 - 0.30 * t)
+        xc = xc - a.sink * t
+        zc = zc + (0 - zc) * 0.6 * t
         # rounded ends
         lo = a.tip_h + a.tip_round
         s_lo = np.sqrt(np.clip(1 - ((lo - h) / a.tip_round) ** 2, 0, 1))
@@ -123,7 +132,7 @@ class Limbs:
         return 0.0, f.centre[1] + f.ry_up
 
 
-def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, crease=0.22):
+def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, crease=0.12):
     """Layers on the body grid covering the part. Returns indices, albedo, normal, baked."""
     n = size
     c = (n - 1) / 2
@@ -163,7 +172,7 @@ def slice_part(limbs: Limbs, which, body_shape, bottom, dh, scale, size, pal, cr
             base = np.asarray(pal["base"], np.float32) * (0.965 + 0.05 * hn)
             # crease where the limb meets the body (the art draws a line there)
             fb = body_shape.F(X[m], Y[m], Z[m]) + 1.0          # body superellipse value (1 = surface)
-            cr = smoothstep(1.35, 1.0, fb) * crease
+            cr = smoothstep(1.12, 1.0, fb) * crease
             outline = np.asarray(pal["outline"], np.float32)
             col = base[None] * (1 - cr[:, None]) + outline[None] * cr[:, None]
             a8 = np.round(alpha[m] * 255).astype(np.uint8)
