@@ -1,0 +1,124 @@
+{
+  "name": "MintTail",
+  "part": "Tail",
+  "version": 1,
+  "grid": "same canvas, pivot, axes and layer spacing as Body; negative layer indices are below the body's first layer (file names Layer_n###)",
+  "layers": 13,
+  "layer_index": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "layer_span": 1.0,
+  "files": [
+    "Tail/Layer_004.png",
+    "Tail/Layer_005.png",
+    "Tail/Layer_006.png",
+    "Tail/Layer_007.png",
+    "Tail/Layer_008.png",
+    "Tail/Layer_009.png",
+    "Tail/Layer_010.png",
+    "Tail/Layer_011.png",
+    "Tail/Layer_012.png",
+    "Tail/Layer_013.png",
+    "Tail/Layer_014.png",
+    "Tail/Layer_015.png",
+    "Tail/Layer_016.png"
+  ],
+  "albedo_files": [
+    "Tail/Albedo/Layer_004.png",
+    "Tail/Albedo/Layer_005.png",
+    "Tail/Albedo/Layer_006.png",
+    "Tail/Albedo/Layer_007.png",
+    "Tail/Albedo/Layer_008.png",
+    "Tail/Albedo/Layer_009.png",
+    "Tail/Albedo/Layer_010.png",
+    "Tail/Albedo/Layer_011.png",
+    "Tail/Albedo/Layer_012.png",
+    "Tail/Albedo/Layer_013.png",
+    "Tail/Albedo/Layer_014.png",
+    "Tail/Albedo/Layer_015.png",
+    "Tail/Albedo/Layer_016.png"
+  ],
+  "normal_files": [
+    "Tail/Normal/Layer_004.png",
+    "Tail/Normal/Layer_005.png",
+    "Tail/Normal/Layer_006.png",
+    "Tail/Normal/Layer_007.png",
+    "Tail/Normal/Layer_008.png",
+    "Tail/Normal/Layer_009.png",
+    "Tail/Normal/Layer_010.png",
+    "Tail/Normal/Layer_011.png",
+    "Tail/Normal/Layer_012.png",
+    "Tail/Normal/Layer_013.png",
+    "Tail/Normal/Layer_014.png",
+    "Tail/Normal/Layer_015.png",
+    "Tail/Normal/Layer_016.png"
+  ],
+  "layer_height_px": [
+    24.882,
+    31.1025,
+    37.323,
+    43.5435,
+    49.764,
+    55.9845,
+    62.205,
+    68.4255,
+    74.646,
+    80.8665,
+    87.087,
+    93.3075,
+    99.528
+  ],
+  "layer_spacing_px": 6.2204999999999995,
+  "image": {
+    "width": 512,
+    "height": 512,
+    "format": "PNG RGBA, straight alpha",
+    "background": "fully transparent"
+  },
+  "pivot": {
+    "x_px": 256.0,
+    "y_px": 256.0,
+    "meaning": "image centre = body axis (character centre) in every layer"
+  },
+  "axes": {
+    "image_right": "+X (character's left)",
+    "image_down": "-Z (character's front)",
+    "stack_up": "+Y"
+  },
+  "render": {
+    "two_sided": false,
+    "gloss_scale": 0.0
+  },
+  "geometry_sheet_px": {
+    "tail": {
+      "centre": [
+        0.0,
+        70.0,
+        148.0
+      ],
+      "rx": 26.0,
+      "ry": 30.0,
+      "rz": 27.0,
+      "tilt_deg": -20.0
+    }
+  },
+  "crease": "albedo darkened towards the outline colour where the limb meets the body",
+  "estimated": [
+    "tail: tilted ellipsoid; width from the back view's round outline (52 px), depth and height from the side view (back edge z=175 at h~80, h=33..100)",
+    "the back view's outline (h 37..85) and the side view (h 33..100) disagree on the height; the ellipsoid takes the middle (h 34..94)",
+    "the joint to the body is a rounded fillet (smooth union)"
+  ],
+  "config_path": "Tail/stack_config.json"
+}
