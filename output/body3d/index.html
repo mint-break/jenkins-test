@@ -131,6 +131,15 @@ figcaption { font-size: 12px; color: var(--muted); }
   </section>
 
   <section class="block">
+    <div class="head"><h2>品質改善（修正前と後）</h2><p>64層の構成・パーツデータはそのまま。下半身の幅と足の裏、しっぽの位置、葉の厚みと向き、胴体の層間補間。描画回数 1128 → 1152（+2%）</p></div>
+    <figure><img src="Preview/quality_lit_before_after.png" alt="法線ライティングでの修正前と後（0・45・90・180・270度と真上）"><figcaption>quality_lit_before_after.png · 法線ライティング（上段が修正前、下段が修正後）</figcaption></figure>
+    <figure><img src="Preview/quality_baked_before_after.png" alt="焼き込みでの修正前と後（0・45・90・180・270度と真上）"><figcaption>quality_baked_before_after.png · 焼き込み（真上の光）</figcaption></figure>
+    <figure><img src="Preview/quality_back_zoom_lit.png" alt="背面の拡大比較（法線ライティング）"><figcaption>quality_back_zoom_lit.png · 背面の拡大（同心円状の縞がなくなった）</figcaption></figure>
+    <figure><img src="Preview/improved_turntable_lit.gif" alt="修正後の回転（法線ライティング）"><figcaption>improved_turntable_lit.gif</figcaption></figure>
+    <figure><img src="Preview/improved_turntable_baked.gif" alt="修正後の回転（焼き込み）"><figcaption>improved_turntable_baked.gif</figcaption></figure>
+  </section>
+
+  <section class="block">
     <div class="head"><h2>胴体の縞の改善（修正前と後）</h2><p>形状と既存の64枚・メッシュはそのまま。隣の層との間を補間して描画（Body/SDF, Body/NormalExt を追加）</p></div>
     <figure><img src="Preview/smoothing_lit_zoom.png" alt="法線ライティングでの修正前と後の拡大比較（正面・45度・側面・背面）"><figcaption>smoothing_lit_zoom.png · 左が修正前、右が修正後（法線ライティング、頭部の拡大）</figcaption></figure>
     <figure><img src="Preview/smoothing_lit_before_after.png" alt="法線ライティングでの修正前と後の全体比較"><figcaption>smoothing_lit_before_after.png · 全体</figcaption></figure>

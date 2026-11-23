@@ -1,0 +1,50 @@
+{
+ "000_front/lit": {
+  "before": 6.032,
+  "after": 6.43
+ },
+ "045/lit": {
+  "before": 5.099,
+  "after": 5.838
+ },
+ "090_side/lit": {
+  "before": 4.439,
+  "after": 5.039
+ },
+ "180_back/lit": {
+  "before": 5.784,
+  "after": 7.451
+ },
+ "270_side/lit": {
+  "before": 4.731,
+  "after": 4.983
+ },
+ "top/lit": {
+  "before": 10.856,
+  "after": 12.34
+ },
+ "000_front/baked": {
+  "before": 5.579,
+  "after": 5.968
+ },
+ "045/baked": {
+  "before": 4.643,
+  "after": 5.213
+ },
+ "090_side/baked": {
+  "before": 3.716,
+  "after": 3.936
+ },
+ "180_back/baked": {
+  "before": 5.766,
+  "after": 7.499
+ },
+ "270_side/baked": {
+  "before": 3.765,
+  "after": 4.14
+ },
+ "top/baked": {
+  "before": 10.862,
+  "after": 12.964
+ }
+}

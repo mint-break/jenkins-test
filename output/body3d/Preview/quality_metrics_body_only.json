@@ -1,0 +1,42 @@
+{
+ "000_front/lit": {
+  "stacked": 0.939,
+  "smooth": 0.838
+ },
+ "000_front/baked": {
+  "stacked": 0.342,
+  "smooth": 0.29
+ },
+ "045/lit": {
+  "stacked": 0.684,
+  "smooth": 0.59
+ },
+ "045/baked": {
+  "stacked": 0.287,
+  "smooth": 0.275
+ },
+ "090_side/lit": {
+  "stacked": 0.614,
+  "smooth": 0.471
+ },
+ "090_side/baked": {
+  "stacked": 0.265,
+  "smooth": 0.256
+ },
+ "180_back/lit": {
+  "stacked": 0.866,
+  "smooth": 0.745
+ },
+ "180_back/baked": {
+  "stacked": 0.317,
+  "smooth": 0.265
+ },
+ "270_side/lit": {
+  "stacked": 0.619,
+  "smooth": 0.468
+ },
+ "270_side/baked": {
+  "stacked": 0.265,
+  "smooth": 0.256
+ }
+}
