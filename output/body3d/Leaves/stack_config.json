@@ -3,7 +3,7 @@
   "part": "Leaves",
   "version": 1,
   "grid": "same canvas, pivot, axes and layer spacing as Body; layer index k sits at Body layer_height_px[0] + k * layer_spacing_px",
-  "layers": 26,
+  "layers": 25,
   "layer_index": [
     61,
     62,
@@ -29,8 +29,7 @@
     82,
     83,
     84,
-    85,
-    86
+    85
   ],
   "layer_span": 1.0,
   "files": [
@@ -58,8 +57,7 @@
     "Leaves/Layer_082.png",
     "Leaves/Layer_083.png",
     "Leaves/Layer_084.png",
-    "Leaves/Layer_085.png",
-    "Leaves/Layer_086.png"
+    "Leaves/Layer_085.png"
   ],
   "albedo_files": [
     "Leaves/Albedo/Layer_061.png",
@@ -86,8 +84,7 @@
     "Leaves/Albedo/Layer_082.png",
     "Leaves/Albedo/Layer_083.png",
     "Leaves/Albedo/Layer_084.png",
-    "Leaves/Albedo/Layer_085.png",
-    "Leaves/Albedo/Layer_086.png"
+    "Leaves/Albedo/Layer_085.png"
   ],
   "normal_files": [
     "Leaves/Normal/Layer_061.png",
@@ -114,8 +111,7 @@
     "Leaves/Normal/Layer_082.png",
     "Leaves/Normal/Layer_083.png",
     "Leaves/Normal/Layer_084.png",
-    "Leaves/Normal/Layer_085.png",
-    "Leaves/Normal/Layer_086.png"
+    "Leaves/Normal/Layer_085.png"
   ],
   "layer_height_px": [
     379.4505,
@@ -142,8 +138,7 @@
     510.081,
     516.3015,
     522.522,
-    528.7425,
-    534.963
+    528.7425
   ],
   "layer_spacing_px": 6.2204999999999995,
   "image": {
@@ -181,17 +176,17 @@
         108.0
       ],
       "length_3d": 199.09,
-      "true_width": 125.0,
-      "roll_deg": 80.0,
+      "true_width": 113.0,
+      "roll_deg": 75.0,
       "width_dir": [
-        -0.2269,
-        0.8996,
-        -0.3731
+        -0.1714,
+        0.8824,
+        -0.4382
       ],
       "upper_normal": [
-        -0.6262,
-        0.1586,
-        0.7633
+        -0.6436,
+        0.2364,
+        0.7279
       ]
     },
     "left_leaf": "mirror of the right leaf in x",
@@ -258,9 +253,9 @@
   },
   "estimated": [
     "leaf direction from the front tip (+-150, 436) and the side tip (back 108, 436): the leaves lean back, which only the side view shows",
-    "blade roll 80.0 deg: the only flat-blade angle that matches both the front (100 px) and side (104 px) widths; the top view (an estimated drawing) shows the blades lying flatter, which the other views do not allow",
-    "true width 125 px: 113 px solved from the front + side apparent widths, widened for the 25 deg V fold so the front view keeps its width",
-    "twist (roll 80 deg at the stem to 60 deg at the tip), V fold 25 deg and a fan of 8 / 3 deg between the leaves are added so a blade never turns to a line while it rotates (thinnest view 11 px -> 36 px) and the two leaves overlap in the side view as in the art",
+    "blade roll 75.0 deg: the only flat-blade angle that matches both the front (100 px) and side (104 px) widths; the top view (an estimated drawing) shows the blades lying flatter, which the other views do not allow",
+    "true width 113 px solved from the front + side apparent widths",
+    "blade roll 75 deg (80 fits the horizontal front/side views best) with a 15 deg V fold along the midrib and a fan of 8 / 3 deg between the leaves: seen from the game camera the front width stays (120 px), the thinnest view while turning grows from 11 px to 24 px, and the two leaves overlap in the side view as in the art",
     "bend, cupping, thickness (plush leaf), serration and vein pattern are drawn to match the art's style, not measured",
     "stem: one shared stem on the axis, ~5 px above the crown; both blades start at its top (lower end inside the head)"
   ]

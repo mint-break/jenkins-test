@@ -18,7 +18,7 @@
     "stack_up": "+Y"
   },
   "layer_spacing_px": 6.2204999999999995,
-  "grid_layers": 87,
+  "grid_layers": 86,
   "min_index": -3,
   "height01_divisor": 64,
   "parts": {
@@ -2059,16 +2059,6 @@
       "baked": "Leaves/Layer_085.png",
       "draw_order": 199,
       "height_px": 528.7425
-    },
-    {
-      "part": "Leaves",
-      "index": 86,
-      "span": 1.0,
-      "albedo": "Leaves/Albedo/Layer_086.png",
-      "normal": "Leaves/Normal/Layer_086.png",
-      "baked": "Leaves/Layer_086.png",
-      "draw_order": 200,
-      "height_px": 534.963
     }
   ],
   "copies_per_layer": 8,
