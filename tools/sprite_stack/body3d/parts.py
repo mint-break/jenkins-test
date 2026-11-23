@@ -109,11 +109,11 @@ def export_leaves(out_dir, params: leaves.LeafParams | None = None, views=None):
             f"blade roll {p.roll_deg} deg: the only flat-blade angle that matches both the front "
             "(100 px) and side (104 px) widths; the top view (an estimated drawing) shows the "
             "blades lying flatter, which the other views do not allow",
-            "true width 125 px: 113 px solved from the front + side apparent widths, widened for the "
-            "25 deg V fold so the front view keeps its width",
-            "twist (roll 80 deg at the stem to 60 deg at the tip), V fold 25 deg and a fan of 8 / 3 deg "
-            "between the leaves are added so a blade never turns to a line while it rotates (thinnest "
-            "view 11 px -> 36 px) and the two leaves overlap in the side view as in the art",
+            "true width 113 px solved from the front + side apparent widths",
+            "blade roll 75 deg (80 fits the horizontal front/side views best) with a 15 deg V fold along "
+            "the midrib and a fan of 8 / 3 deg between the leaves: seen from the game camera the front "
+            "width stays (120 px), the thinnest view while turning grows from 11 px to 24 px, and the two "
+            "leaves overlap in the side view as in the art",
             "bend, cupping, thickness (plush leaf), serration and vein pattern are drawn to "
             "match the art's style, not measured",
             "stem: one shared stem on the axis, ~5 px above the crown; both blades start at its top (lower end inside the head)",
@@ -283,7 +283,7 @@ def main(argv=None):
     ap.add_argument("--input", default="input/views_apose.png")
     ap.add_argument("--order", default="front,side,back,top")
     ap.add_argument("--out", default="output/body3d")
-    ap.add_argument("--roll", type=float, default=80.0, help="leaf blade roll about the midrib (deg)")
+    ap.add_argument("--roll", type=float, default=75.0, help="leaf blade roll about the midrib (deg)")
     ap.add_argument("--parts", default="leaves,face,limbs,tail", help="parts to (re)export; others are reused")
     a = ap.parse_args(argv)
     views = load_views(a.input, order=a.order)

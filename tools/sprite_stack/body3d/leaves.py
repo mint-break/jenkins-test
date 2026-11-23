@@ -35,13 +35,13 @@ class LeafParams:
     base: tuple = (1.5, 355.0, 3.0)        # right leaf (mirrored for the left): both blades start at
                                            # the top of ONE shared stem, ~5 px above the crown (349.8)
     tip: tuple = (150.0, 436.0, 108.0)
-    width: float = 125.0                   # true max width (sheet px): 113 seen from the front + the fold
-    roll_deg: float = 80.0
+    width: float = 113.0                   # true max width (sheet px), solved from the front + side views
+    roll_deg: float = 75.0
     bend: float = 0.05                     # midrib bend (fraction of length) towards the upper face
     cup: float = 0.10                      # blade edges rise (fraction of half width)
     thickness: float = 8.0
-    roll_tip_deg: float | None = 60.0   # twist: roll at the tip (None = no twist)
-    fold_deg: float = 25.0       # V fold of the two halves about the midrib (0 = flat)
+    roll_tip_deg: float | None = None   # twist: roll at the tip (None = no twist)
+    fold_deg: float = 15.0       # V fold of the two halves about the midrib (0 = flat)
     fan_deg: float = 8.0         # right leaf turned about the vertical (deg, + = tip forward)
     fan_deg_left: float = 3.0    # left leaf (mirror) turned the other way by this much
     serration: float = 0.035
