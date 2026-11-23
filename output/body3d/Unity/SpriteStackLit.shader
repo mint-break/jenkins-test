@@ -108,10 +108,13 @@ Shader "SpriteStack/Lit"
                 if (_Interp > 0.5)
                 {
                     // continuous stack: blend this layer with the next one. SDF (8-bit,
-                    // 128 + 16 * px inside the edge) is interpolated, then thresholded,
-                    // so the outline is the real cross-section between the two layers.
-                    float d0 = (tex2D(_SdfTex, i.uv).r * 255.0 - 128.0) / 16.0;
-                    float d1 = (tex2D(_SdfTex1, i.uv).r * 255.0 - 128.0) / 16.0;
+                    // sqrt-companded: d = sign(q) * 48 * q^2, q = (v - 128) / 127, px inside
+                    // the edge) is interpolated, then thresholded, so the outline is the
+                    // real cross-section between the two layers.
+                    float q0 = (tex2D(_SdfTex, i.uv).r * 255.0 - 128.0) / 127.0;
+                    float q1 = (tex2D(_SdfTex1, i.uv).r * 255.0 - 128.0) / 127.0;
+                    float d0 = sign(q0) * 48.0 * q0 * q0;
+                    float d1 = sign(q1) * 48.0 * q1 * q1;
                     float cov = saturate(0.5 + lerp(d0, d1, _T));
                     float3 n1 = tex2D(_NormalTex1, i.uv).rgb * 2.0 - 1.0;
                     bool h0 = dot(n, n) > 0.25, h1 = dot(n1, n1) > 0.25;

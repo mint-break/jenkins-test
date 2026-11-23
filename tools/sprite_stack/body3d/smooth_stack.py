@@ -14,8 +14,11 @@ stripes. Here every drawn copy sits at a height h between two layer centres
   * colour  : the albedo of whichever layer covers the pixel
 
 The existing Albedo / Normal / baked layers are unchanged; SDF layers are new.
-SDF encoding: 8-bit grey, value = 128 + 16 * d (d = canvas px inside the edge,
-clamped to +-8); coverage = clamp(0.5 + d, 0, 1).
+SDF encoding: 8-bit grey, square-root companded so it is fine at the edge and
+still reaches far enough for the crown, where neighbouring layers differ by up
+to ~28 px: v = 128 + 127 * sign(d) * sqrt(|d| / 48), d = canvas px inside the
+edge (clamped to +-48); decode d = sign(v - 128) * 48 * ((v - 128) / 127)^2;
+coverage = clamp(0.5 + d, 0, 1).
 """
 from __future__ import annotations
 
@@ -29,8 +32,7 @@ from scipy import ndimage as nd
 from .model import BodyShape
 from .stack import shade_top
 
-SDF_SCALE = 16.0
-SDF_RANGE = 7.9
+SDF_RANGE = 48.0
 
 
 def make_sdf(shape: BodyShape, layers=64, size=512, scale=1.2):
@@ -46,13 +48,49 @@ def make_sdf(shape: BodyShape, layers=64, size=512, scale=1.2):
         f = shape.F(X, np.full_like(X, h), Z) + 1.0
         gv, gu = np.gradient(f)
         gl = np.hypot(gu, gv) + 1e-9
-        d = np.clip((1 - f) / gl, -SDF_RANGE, SDF_RANGE)          # canvas px, > 0 inside
-        out.append(np.clip(np.round(128 + SDF_SCALE * d), 0, 255).astype(np.uint8))
+        d = exact_distance(f, gl)                                  # canvas px, > 0 inside
+        out.append(encode(d))
     return out
 
 
+def encode(d):
+    d = np.clip(d, -SDF_RANGE, SDF_RANGE)
+    v = 128 + 127 * np.sign(d) * np.sqrt(np.abs(d) / SDF_RANGE)
+    return np.clip(np.round(v), 1, 255).astype(np.uint8)
+
+
 def decode(sdf8):
-    return (sdf8.astype(np.float32) - 128) / SDF_SCALE
+    q = (sdf8.astype(np.float32) - 128) / 127
+    return np.sign(q) * SDF_RANGE * q * q
+
+
+def exact_distance(f, gl):
+    """Signed distance in canvas px: the first-order (f - 1) / |grad f| is exact only
+    near the edge, so far from it use the Euclidean distance to the edge pixels."""
+    near = (1 - f) / gl
+    inside = f < 1
+    din = nd.distance_transform_edt(inside)
+    dout = nd.distance_transform_edt(~inside)
+    far = np.where(inside, din - 0.5, -(dout - 0.5))
+    return np.where(np.abs(near) < 2, near, far)
+
+
+def export_normal_ext(body_dir, layers=64):
+    """Normals extended over the whole canvas (nearest covered pixel), alpha = coverage.
+    Interpolation reads a layer's normal where the NEIGHBOUR covers the pixel, so the
+    4 px padding of Body/Normal is not enough (it leaves a ring at its end)."""
+    d = os.path.join(body_dir, "NormalExt")
+    os.makedirs(d, exist_ok=True)
+    out = []
+    for i in range(layers):
+        nm = np.asarray(Image.open(os.path.join(body_dir, "Normal", f"Layer_{i:03d}.png")).convert("RGBA")).copy()
+        cov = nm[..., 3] > 0
+        if cov.any():
+            _, (iy, ix) = nd.distance_transform_edt(~cov, return_indices=True)
+            nm[..., :3] = nm[iy, ix, :3]
+        Image.fromarray(nm, "RGBA").save(os.path.join(d, f"Layer_{i:03d}.png"))
+        out.append(nm)
+    return out
 
 
 def export_sdf(shape, body_dir, layers=64, size=512, scale=1.2):
@@ -79,6 +117,12 @@ def _prep(albedo, normal, sdf8, yaw, S, sq):
     rgb = np.stack([tr(albedo[..., k] / 255.0 * a) for k in range(3)], -1)
     aa = tr(a)
     rgb = np.divide(rgb, aa[..., None], out=np.zeros_like(rgb), where=aa[..., None] > 1e-3)
+    # colour defined everywhere: the interpolated outline may reach a few px past this
+    # layer's own coverage, where the stored colour is the transparent black
+    solid = aa > 0.5
+    if solid.any():
+        _, (iy, ix) = nd.distance_transform_edt(~solid, return_indices=True)
+        rgb = rgb[iy, ix]
     nv = [tr(normal[..., k] / 255.0 * 2 - 1) for k in range(3)]
     c, s = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
     N = np.stack([nv[0] * c - nv[1] * s, nv[0] * s + nv[1] * c, nv[2]], -1)
@@ -124,7 +168,7 @@ def smooth_frame(albedo, normal, sdf, spacing, yaw, pal, squash=0.75, out_scale=
         nB = np.where(hasB, B["N"], A["N"])
         N = (1 - t) * nA + t * nB
         N /= np.linalg.norm(N, axis=-1, keepdims=True) + 1e-9
-        rgb = np.where((A["a"] > 0.5)[..., None], A["rgb"], B["rgb"])
+        rgb = (1 - t) * A["rgb"] + t * B["rgb"]
         h01 = (j0 + t * (j1 - j0) + 0.5) / L
         if mode == "lit":
             tone = lit.shade(N, h01, pal, squash)
@@ -153,12 +197,17 @@ def smooth_frame(albedo, normal, sdf, spacing, yaw, pal, squash=0.75, out_scale=
 
 
 def band_energy(frame: Image.Image, spacing_px: float):
-    """Stripe strength: brightness changes along vertical lines through the body at the
-    layer frequency (period = one layer on screen), relative to the smooth shading.
-    Returns the mean amplitude (0..255 levels) of the high-pass signal."""
+    """Stripe strength inside the body: brightness minus its vertically smoothed
+    version (normalised smoothing over body pixels only, so the silhouette and the
+    transparent background never leak in), measured away from the outline.
+    Returns rms and 99th percentile in 0..255 levels."""
     a = np.asarray(frame).astype(np.float32)
-    m = nd.binary_erosion(a[..., 3] > 250, iterations=4)
+    body = a[..., 3] > 250
     lum = a[..., :3] @ np.array([0.299, 0.587, 0.114], np.float32)
-    smooth = nd.gaussian_filter1d(lum, max(1.0, spacing_px), axis=0)
+    sig = max(1.0, spacing_px)
+    num = nd.gaussian_filter1d(lum * body, sig, axis=0)
+    den = nd.gaussian_filter1d(body.astype(np.float32), sig, axis=0)
+    smooth = np.divide(num, den, out=np.zeros_like(num), where=den > 1e-3)
+    m = nd.binary_erosion(body, iterations=int(round(2 * sig)))
     hp = (lum - smooth)[m]
     return {"rms": float(np.sqrt(np.mean(hp ** 2))), "p99": float(np.percentile(np.abs(hp), 99))}

@@ -55,10 +55,13 @@ been compiled or run in Unity yet. The lighting maths is the same as
 The plain stack draws each body layer's single cross-section several times across its height,
 so the outline and the shading step at every layer boundary (horizontal banding, most visible
 from the back and at 45 deg). With `interpolate` on, every copy blends the two nearest layers:
-the signed distance in `Body/SDF` (8-bit, 128 + 16 * px inside the edge) is interpolated and
+the signed distance in `Body/SDF` (8-bit, square-root companded, +-48 px; see the shader) is interpolated and
 thresholded, and the normals are interpolated, so outline and shading change continuously.
 - Import `Body/SDF/*.png` as Default, **sRGB off**, Single Channel (R), Compression None,
   Filter Bilinear, and assign them to the Body part's `sdf` (000..063), tick `interpolate`.
+- Use `Body/NormalExt/*.png` (normals extended over the whole canvas; import like the
+  Normal maps) as the Body part's `normals` when `interpolate` is on: interpolation reads a
+  layer's normal where the next layer covers the pixel.
 - Albedo sprites of the Body: Mesh Type **Full Rect** (a tight mesh would clip the interpolated
   outline where the next layer is larger).
 - Other parts keep `interpolate` off.
