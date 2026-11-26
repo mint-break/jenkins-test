@@ -1,0 +1,105 @@
+{
+  "name": "MintFeet",
+  "part": "Feet",
+  "version": 1,
+  "grid": "same canvas, pivot, axes and layer spacing as Body; negative layer indices are below the body's first layer (file names Layer_n###)",
+  "layers": 9,
+  "layer_index": [
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "layer_span": 1.0,
+  "files": [
+    "Limbs/Feet/Layer_n003.png",
+    "Limbs/Feet/Layer_n002.png",
+    "Limbs/Feet/Layer_n001.png",
+    "Limbs/Feet/Layer_000.png",
+    "Limbs/Feet/Layer_001.png",
+    "Limbs/Feet/Layer_002.png",
+    "Limbs/Feet/Layer_003.png",
+    "Limbs/Feet/Layer_004.png",
+    "Limbs/Feet/Layer_005.png"
+  ],
+  "albedo_files": [
+    "Limbs/Feet/Albedo/Layer_n003.png",
+    "Limbs/Feet/Albedo/Layer_n002.png",
+    "Limbs/Feet/Albedo/Layer_n001.png",
+    "Limbs/Feet/Albedo/Layer_000.png",
+    "Limbs/Feet/Albedo/Layer_001.png",
+    "Limbs/Feet/Albedo/Layer_002.png",
+    "Limbs/Feet/Albedo/Layer_003.png",
+    "Limbs/Feet/Albedo/Layer_004.png",
+    "Limbs/Feet/Albedo/Layer_005.png"
+  ],
+  "normal_files": [
+    "Limbs/Feet/Normal/Layer_n003.png",
+    "Limbs/Feet/Normal/Layer_n002.png",
+    "Limbs/Feet/Normal/Layer_n001.png",
+    "Limbs/Feet/Normal/Layer_000.png",
+    "Limbs/Feet/Normal/Layer_001.png",
+    "Limbs/Feet/Normal/Layer_002.png",
+    "Limbs/Feet/Normal/Layer_003.png",
+    "Limbs/Feet/Normal/Layer_004.png",
+    "Limbs/Feet/Normal/Layer_005.png"
+  ],
+  "layer_height_px": [
+    -18.6615,
+    -12.441,
+    -6.2205,
+    0.0,
+    6.2205,
+    12.441,
+    18.6615,
+    24.882,
+    31.1025
+  ],
+  "layer_spacing_px": 6.2204999999999995,
+  "image": {
+    "width": 512,
+    "height": 512,
+    "format": "PNG RGBA, straight alpha",
+    "background": "fully transparent"
+  },
+  "pivot": {
+    "x_px": 256.0,
+    "y_px": 256.0,
+    "meaning": "image centre = body axis (character centre) in every layer"
+  },
+  "axes": {
+    "image_right": "+X (character's left)",
+    "image_down": "-Z (character's front)",
+    "stack_up": "+Y"
+  },
+  "render": {
+    "two_sided": false,
+    "gloss_scale": 0.0
+  },
+  "geometry_sheet_px": {
+    "right_foot": {
+      "centre": [
+        80.0,
+        16.0,
+        -22.0
+      ],
+      "rx": 50.0,
+      "rz": 60.5,
+      "ry_down": 17.0,
+      "ry_up": 32.0,
+      "flat_bottom_at": 0.0
+    },
+    "left_foot": "mirror of the right foot in x"
+  },
+  "crease": "albedo darkened towards the outline colour where the limb meets the body",
+  "estimated": [
+    "feet: ellipsoids fitted to the two blobs under the body (front view rows h<20) and the side silhouette below h=20; flat on the ground",
+    "foot top (h=48) is hidden by the body; the side view's line over the toe (h~35 at z=-70) is matched"
+  ],
+  "config_path": "Limbs/Feet/stack_config.json"
+}

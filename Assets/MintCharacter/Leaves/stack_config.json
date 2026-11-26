@@ -1,0 +1,262 @@
+{
+  "name": "MintLeaves",
+  "part": "Leaves",
+  "version": 1,
+  "grid": "same canvas, pivot, axes and layer spacing as Body; layer index k sits at Body layer_height_px[0] + k * layer_spacing_px",
+  "layers": 25,
+  "layer_index": [
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85
+  ],
+  "layer_span": 1.0,
+  "files": [
+    "Leaves/Layer_061.png",
+    "Leaves/Layer_062.png",
+    "Leaves/Layer_063.png",
+    "Leaves/Layer_064.png",
+    "Leaves/Layer_065.png",
+    "Leaves/Layer_066.png",
+    "Leaves/Layer_067.png",
+    "Leaves/Layer_068.png",
+    "Leaves/Layer_069.png",
+    "Leaves/Layer_070.png",
+    "Leaves/Layer_071.png",
+    "Leaves/Layer_072.png",
+    "Leaves/Layer_073.png",
+    "Leaves/Layer_074.png",
+    "Leaves/Layer_075.png",
+    "Leaves/Layer_076.png",
+    "Leaves/Layer_077.png",
+    "Leaves/Layer_078.png",
+    "Leaves/Layer_079.png",
+    "Leaves/Layer_080.png",
+    "Leaves/Layer_081.png",
+    "Leaves/Layer_082.png",
+    "Leaves/Layer_083.png",
+    "Leaves/Layer_084.png",
+    "Leaves/Layer_085.png"
+  ],
+  "albedo_files": [
+    "Leaves/Albedo/Layer_061.png",
+    "Leaves/Albedo/Layer_062.png",
+    "Leaves/Albedo/Layer_063.png",
+    "Leaves/Albedo/Layer_064.png",
+    "Leaves/Albedo/Layer_065.png",
+    "Leaves/Albedo/Layer_066.png",
+    "Leaves/Albedo/Layer_067.png",
+    "Leaves/Albedo/Layer_068.png",
+    "Leaves/Albedo/Layer_069.png",
+    "Leaves/Albedo/Layer_070.png",
+    "Leaves/Albedo/Layer_071.png",
+    "Leaves/Albedo/Layer_072.png",
+    "Leaves/Albedo/Layer_073.png",
+    "Leaves/Albedo/Layer_074.png",
+    "Leaves/Albedo/Layer_075.png",
+    "Leaves/Albedo/Layer_076.png",
+    "Leaves/Albedo/Layer_077.png",
+    "Leaves/Albedo/Layer_078.png",
+    "Leaves/Albedo/Layer_079.png",
+    "Leaves/Albedo/Layer_080.png",
+    "Leaves/Albedo/Layer_081.png",
+    "Leaves/Albedo/Layer_082.png",
+    "Leaves/Albedo/Layer_083.png",
+    "Leaves/Albedo/Layer_084.png",
+    "Leaves/Albedo/Layer_085.png"
+  ],
+  "normal_files": [
+    "Leaves/Normal/Layer_061.png",
+    "Leaves/Normal/Layer_062.png",
+    "Leaves/Normal/Layer_063.png",
+    "Leaves/Normal/Layer_064.png",
+    "Leaves/Normal/Layer_065.png",
+    "Leaves/Normal/Layer_066.png",
+    "Leaves/Normal/Layer_067.png",
+    "Leaves/Normal/Layer_068.png",
+    "Leaves/Normal/Layer_069.png",
+    "Leaves/Normal/Layer_070.png",
+    "Leaves/Normal/Layer_071.png",
+    "Leaves/Normal/Layer_072.png",
+    "Leaves/Normal/Layer_073.png",
+    "Leaves/Normal/Layer_074.png",
+    "Leaves/Normal/Layer_075.png",
+    "Leaves/Normal/Layer_076.png",
+    "Leaves/Normal/Layer_077.png",
+    "Leaves/Normal/Layer_078.png",
+    "Leaves/Normal/Layer_079.png",
+    "Leaves/Normal/Layer_080.png",
+    "Leaves/Normal/Layer_081.png",
+    "Leaves/Normal/Layer_082.png",
+    "Leaves/Normal/Layer_083.png",
+    "Leaves/Normal/Layer_084.png",
+    "Leaves/Normal/Layer_085.png"
+  ],
+  "layer_height_px": [
+    379.4505,
+    385.671,
+    391.8915,
+    398.112,
+    404.3325,
+    410.553,
+    416.7735,
+    422.994,
+    429.2145,
+    435.435,
+    441.6555,
+    447.876,
+    454.0965,
+    460.317,
+    466.5375,
+    472.758,
+    478.9785,
+    485.199,
+    491.4195,
+    497.64,
+    503.8605,
+    510.081,
+    516.3015,
+    522.522,
+    528.7425
+  ],
+  "layer_spacing_px": 6.2204999999999995,
+  "image": {
+    "width": 512,
+    "height": 512,
+    "format": "PNG RGBA, straight alpha",
+    "background": "fully transparent"
+  },
+  "pivot": {
+    "x_px": 256.0,
+    "y_px": 256.0,
+    "meaning": "image centre = body axis (character centre) in every layer"
+  },
+  "axes": {
+    "image_right": "+X (character's left)",
+    "image_down": "-Z (character's front)",
+    "stack_up": "+Y"
+  },
+  "draw_order": "by layer index; at the same index draw Body first, then Leaves",
+  "render": {
+    "two_sided": true,
+    "gloss_scale": 0.35,
+    "note": "thin surface: light the side facing the viewer (flip the normal when dot(n, view) < 0). Normals store the leaf's upper face."
+  },
+  "geometry_sheet_px": {
+    "right_leaf": {
+      "base": [
+        1.5,
+        355.0,
+        3.0
+      ],
+      "tip": [
+        150.0,
+        436.0,
+        108.0
+      ],
+      "length_3d": 199.09,
+      "true_width": 113.0,
+      "roll_deg": 75.0,
+      "width_dir": [
+        -0.1714,
+        0.8824,
+        -0.4382
+      ],
+      "upper_normal": [
+        -0.6436,
+        0.2364,
+        0.7279
+      ]
+    },
+    "left_leaf": "mirror of the right leaf in x",
+    "bend": 0.05,
+    "cup": 0.1,
+    "thickness": 8.0,
+    "width_profile": {
+      "u": [
+        0.0,
+        0.05,
+        0.15,
+        0.25,
+        0.35,
+        0.45,
+        0.55,
+        0.65,
+        0.75,
+        0.85,
+        0.95,
+        1.0
+      ],
+      "w": [
+        0.0,
+        8,
+        44,
+        68,
+        85,
+        100,
+        99,
+        95,
+        80,
+        60,
+        30,
+        0.0
+      ]
+    }
+  },
+  "colours_rgb": {
+    "base": [
+      127,
+      224,
+      169
+    ],
+    "light": [
+      147,
+      232,
+      182
+    ],
+    "vein": [
+      80,
+      180,
+      132
+    ],
+    "edge": [
+      36,
+      104,
+      80
+    ],
+    "stem": [
+      98,
+      196,
+      146
+    ]
+  },
+  "estimated": [
+    "leaf direction from the front tip (+-150, 436) and the side tip (back 108, 436): the leaves lean back, which only the side view shows",
+    "blade roll 75.0 deg: the only flat-blade angle that matches both the front (100 px) and side (104 px) widths; the top view (an estimated drawing) shows the blades lying flatter, which the other views do not allow",
+    "true width 113 px solved from the front + side apparent widths",
+    "blade roll 75 deg (80 fits the horizontal front/side views best) with a 15 deg V fold along the midrib and a fan of 8 / 3 deg between the leaves: seen from the game camera the front width stays (120 px), the thinnest view while turning grows from 11 px to 24 px, and the two leaves overlap in the side view as in the art",
+    "bend, cupping, thickness (plush leaf), serration and vein pattern are drawn to match the art's style, not measured",
+    "stem: one shared stem on the axis, ~5 px above the crown; both blades start at its top (lower end inside the head)"
+  ]
+}
